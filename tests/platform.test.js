@@ -159,3 +159,6 @@ test("Provider model discovery has visible mobile-selectable results and latest 
 
 
 test("Provider discovery accepts unsaved API key and base URL from the settings form",()=>{const server=read("server.js"),providers=read("providers.js"),js=read("public/app.js");assert.ok(server.includes('app.post("/api/providers/:id/models"'));assert.ok(providers.includes("async models(id,overrides={})"));assert.ok(js.includes('method:"POST",body:JSON.stringify({apiKey:$("providerApiKey").value,baseUrl:$("providerBaseUrl").value})'));});
+
+
+test("current cloud model aliases are documented in provider presets",()=>{const providers=read("providers.js"),ui=read("public/app.js");for(const id of ["gpt-6.2-astra","claude-opus-5-5","gemini-3.8-flash","deepseek-flash"])assert.ok(providers.includes(id)&&ui.includes(id),"missing current model "+id);});
