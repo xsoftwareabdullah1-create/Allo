@@ -70,9 +70,9 @@ app.all("/api/:endpoint", async (req, res) => {
 
 
 const OPENAI_COMPATIBLE = new Set(["GET /v1/models","POST /v1/chat/completions","POST /v1/completions","POST /v1/embeddings"]);
-app.all("/v1/:endpoint", async (req, res) => {
+app.all("/v1/*", async (req, res) => {
   const method = req.method.toUpperCase();
-  const endpoint = req.params.endpoint;
+  const endpoint = req.path.slice("/v1/".length);
   const key = method + " /v1/" + endpoint;
   if (!OPENAI_COMPATIBLE.has(key)) return res.status(404).json({ error: "Unsupported OpenAI-compatible endpoint" });
   try {
