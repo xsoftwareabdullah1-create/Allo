@@ -26,7 +26,7 @@ The inference executable is built into the Allo Docker image from the open-sourc
 - Model inspection, deletion and local file copy.
 - OpenAI-compatible chat and model-list API.
 - Persistent chat and prompt workspace.
-- No Ollama daemon, container, API or paid inference API key.
+- No Ollama daemon, container or API dependency. Local GGUF inference does not require a cloud key.
 
 ## Quick start — Docker
 Requirements: Docker Engine with Compose plugin. The first build compiles the bundled CPU llama.cpp server and can take several minutes. Model downloads require additional disk space and RAM.
@@ -45,6 +45,7 @@ PORT=3000
 ALLO_USERNAME=choose-a-username
 ALLO_PASSWORD=replace-with-a-long-random-password
 ALLO_API_KEY=replace-with-a-separate-random-api-key
+ALLO_ENCRYPTION_KEY=replace-with-a-long-random-32-byte-secret
 ALLO_MAX_LOADED_MODELS=1
 ALLO_CONTEXT_SIZE=4096
 ALLO_GPU_LAYERS=0
@@ -145,3 +146,8 @@ MIT for Allo's code. The bundled llama.cpp component retains its upstream licens
 Allo also supports a multi-provider gateway for OpenAI, Claude, Gemini, DeepSeek, Groq, OpenRouter, Together AI, Fireworks, Mistral, xAI, Cerebras, Perplexity and custom OpenAI-compatible HTTPS APIs. Choose a provider in the chat model selector, then configure its API key and model in Settings.
 
 Before saving a provider key, set `ALLO_ENCRYPTION_KEY` on the server to a persistent random secret (generate one with `openssl rand -hex 32`). Allo encrypts provider credentials at rest using AES-256-GCM. Keep this secret backed up and unchanged; losing it makes existing provider keys unreadable. Cloud API usage may be paid and requires provider credentials. The built-in local GGUF runtime remains available without cloud keys.
+
+## Cloud AI providers and billing
+Allo includes provider presets for OpenAI, Claude, Gemini, DeepSeek, Groq, OpenRouter, Together, Fireworks, Mistral, xAI, Cerebras, Perplexity, Cohere, NVIDIA NIM, Hugging Face Inference, Qwen/DashScope, Moonshot Kimi, Z.ai/GLM, SiliconFlow, Novita and Inference.net. A custom OpenAI-compatible HTTPS endpoint can connect additional gateways and self-hosted servers. Aggregators can expose large and changing model catalogs; use Settings → Discover available models to query the selected provider.
+
+Set `ALLO_ENCRYPTION_KEY` in `.env` before saving cloud credentials. Generate a persistent value using `openssl rand -hex 32`; never rotate or lose it without first migrating encrypted credentials. Allo tracks request and token usage returned by providers. For estimated USD cost, enter current input/output price per million tokens from each provider's pricing page and optionally set a monthly budget. These are estimates only, not provider invoices or live account balances. Actual billing, credits, taxes and account limits are controlled by each provider. Local GGUF use has no cloud API billing.
