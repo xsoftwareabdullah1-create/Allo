@@ -65,7 +65,7 @@ Qwen/Qwen2.5-0.5B-Instruct-GGUF
 Allo selects a GGUF file and downloads it into its persistent model store. To choose a specific file, use `owner/repository:folder/model-file.Q4_K_M.gguf`. A small quantized model is a better starting point for machines with limited RAM.
 
 ## Run without Docker
-Requirements: Node.js 20+ and a locally installed `llama-server` executable from llama.cpp.
+Requirements: Node.js 20+ and a locally installed `llama-server` executable from llama.cpp. If startup reports `spawn llama-server ENOENT`, the inference executable is missing or not on `PATH`; Allo now reports this explicitly at `/health` and `/api/config`. Install/build llama.cpp, then set `ALLO_LLAMACPP_BIN` to the full path of the executable. For hosted deployments, use the repository Dockerfile or Docker Compose so the inference engine is built into the image; a generic Node-only deployment will not contain `llama-server` automatically.
 
 ```bash
 npm install
