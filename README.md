@@ -39,7 +39,7 @@ npm start
 
 Set `OLLAMA_BASE_URL` on the Allo server. It defaults to `http://127.0.0.1:11434`. If Ollama runs on another computer, set this to that server's reachable address.
 
-Do not expose an unauthenticated Ollama server directly to the public internet. Put Allo behind authentication and HTTPS before making it publicly accessible. Keep the Ollama API on a trusted network.
+For a public deployment, set `NODE_ENV=production`, `ALLO_USERNAME`, and `ALLO_PASSWORD`. Allo requires credentials in production and protects the web interface and API with HTTP Basic Authentication. Use HTTPS, strong credentials, network restrictions, and keep the Ollama API on a trusted network.
 
 ## API
 
