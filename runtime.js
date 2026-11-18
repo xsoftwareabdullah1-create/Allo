@@ -274,11 +274,22 @@ class AlloRuntime {
     return response;
   }
 
+  async alias(source, destination) {
+    const item = this.get(source);
+    if (typeof destination !== "string" || !/^[A-Za-z0-9._-]{1,80}$/.test(destination.trim())) throw new Error("Alias must be 1–80 letters, numbers, dots, underscores or hyphens.");
+    const id = destination.trim();
+    if (this.models.has(id)) throw new Error("A model with that name already exists.");
+    this.models.set(id, { ...item, id, repo: "alias:" + source, filename: item.filename, file: item.file, path: item.path, addedAt: new Date().toISOString(), aliasOf: source });
+    await this.save();
+    return this.models.get(id);
+  }
+
   async remove(id) {
     const item = this.get(id);
     await this.stop(id);
-    await fs.rm(item.path, { force: true });
     this.models.delete(id);
+    const stillReferenced = [...this.models.values()].some(model => model.path === item.path);
+    if (!stillReferenced) await fs.rm(item.path, { force: true });
     await this.save();
   }
 
