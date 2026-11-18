@@ -80,3 +80,14 @@ test("assistant messages render escaped markdown and code blocks", () => {
   assert.ok(js.includes("code-block"));
   assert.ok(js.includes("content.innerHTML=renderAssistantMarkdown(m.content)"));
 });
+
+
+test("runtime reports a clear missing llama-server diagnostic", () => {
+  const runtime = read("runtime.js");
+  const server = read("server.js");
+  assert.ok(runtime.includes("async resolveServerBinary()"));
+  assert.ok(runtime.includes("llama-server executable not found"));
+  assert.ok(runtime.includes("ALLO_LLAMACPP_BIN"));
+  assert.ok(server.includes("runtime.binaryStatus()"));
+  assert.ok(server.includes("binary.available ? 200 : 503"));
+});
