@@ -163,7 +163,7 @@ class AlloRuntime {
 
   async resolveServerBinary() {
     const configured = process.env.ALLO_LLAMACPP_BIN || "llama-server";
-    const hasPath = configured.includes("/") || configured.includes("\\\\");
+    const hasPath = configured.includes("/") || configured.includes("\\");
     const candidates = hasPath
       ? [path.resolve(configured)]
       : [
