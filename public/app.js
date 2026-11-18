@@ -149,7 +149,42 @@ $("apiRun").onclick=async()=>{const method=$("apiMethod").value,endpoint=$("apiE
 
 document.addEventListener("keydown",e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();newChat();}});
 $("temperature").addEventListener("input",()=>{$("temperatureValue").textContent=$("temperature").value;});
-renderMessages();renderHistory();loadModels();loadSettings();loadProviders();loadBilling();loadWorkspace();
+renderMessages();renderHistory();loadModels();loadSettings();loadProviders().then(renderMarketplace);loadBilling();loadWorkspace();
 async function loadApiKeys(){try{const d=await(await api("keys")).json(),root=$("apiKeyList");root.innerHTML="";(d.keys||[]).forEach(k=>{const row=document.createElement("div");row.className="api-endpoint-row";const info=document.createElement("span");info.textContent=k.name+" · "+k.prefix+"••••"+k.lastFour;const revoke=document.createElement("button");revoke.className="secondary-button";revoke.textContent="Revoke";revoke.onclick=async()=>{if(!confirm("Revoke API key "+k.name+"?"))return;try{await api("keys/"+k.id,{method:"DELETE"});await loadApiKeys();toast("API key revoked.");}catch(e){toast(e.message);}};row.append(info,revoke);root.append(row);});}catch(e){$("apiKeyList").textContent=e.message;}}
 $("createApiKey").onclick=async()=>{const name=$("newApiKeyName").value.trim();if(!name){toast("Enter a name for this API key.");return;}$("createApiKey").disabled=true;try{const d=await(await api("keys",{method:"POST",body:JSON.stringify({name})})).json();const box=$("createdApiKey");box.hidden=false;box.textContent="Copy this key now. It will not be shown again: "+d.token;const copy=document.createElement("button");copy.className="secondary-button";copy.textContent="Copy key";copy.onclick=()=>navigator.clipboard?.writeText(d.token).then(()=>toast("API key copied.")).catch(()=>toast("Select and copy the key manually."));box.append(copy);$("newApiKeyName").value="";await loadApiKeys();toast("API key created.");}catch(e){toast(e.message);}finally{$("createApiKey").disabled=false;}};
 loadApiKeys();
+
+/* Marketplace home interactions and live workspace cards */
+function renderMarketplace(){
+ const grid=$("marketModelGrid");if(!grid)return;
+ $("marketModelCount").textContent=String(state.models.length);
+ $("marketProviderCount").textContent=String(providerData.length||28);
+ grid.innerHTML="";
+ const cards=[];
+ state.models.slice(0,3).forEach(m=>cards.push({kind:"local",name:m.name,meta:formatSize(m.size)+" · Local GGUF",status:"Installed",action:()=>{$("modelSelect").value=m.name;showView("chat");$("promptInput").focus();}}));
+ providerData.filter(p=>p.configured).slice(0,Math.max(0,6-cards.length)).forEach(p=>cards.push({kind:"cloud",name:p.name,meta:p.model||"Choose a model",status:"Connected",action:()=>{$("providerConfigSelect").value=p.id;$("providerConfigSelect").onchange();showView("settings");$("providerSettings").scrollIntoView({behavior:"smooth"});}}));
+ if(!cards.length){
+  const empty=document.createElement("div");empty.className="market-model-card empty";empty.textContent="No models installed or cloud providers connected yet. Discover a GGUF model or connect a provider API key to get started.";grid.append(empty);
+ }else cards.forEach(item=>{
+  const card=document.createElement("article");card.className="market-model-card";
+  const symbol=document.createElement("div");symbol.className="model-symbol";symbol.textContent=item.kind==="local"?"◈":"✳";
+  const body=document.createElement("div");body.style.minWidth="0";const name=document.createElement("div");name.className="model-name";name.textContent=item.name;const meta=document.createElement("div");meta.className="model-meta";meta.textContent=item.meta;body.append(name,meta);
+  const status=document.createElement("span");status.className="market-card-status";status.textContent=item.status;
+  const action=document.createElement("button");action.textContent=item.kind==="local"?"Open chat":"Configure";action.onclick=item.action;body.append(action);card.append(symbol,body,status);grid.append(card);
+ });
+ const strip=$("marketProviderStrip");if(strip){strip.innerHTML="";providerData.slice(0,10).forEach(p=>{const b=document.createElement("button");b.type="button";b.textContent=p.name+(p.configured?" · Connected":"");b.className="market-provider-chip";b.onclick=()=>{$("providerConfigSelect").value=p.id;$("providerConfigSelect").onchange();showView("settings");$("providerSettings").scrollIntoView({behavior:"smooth"});};strip.append(b);});}
+}
+$("marketDiscover").onclick=()=>showView("explore");
+$("marketSeeAll").onclick=()=>showView("explore");
+$("marketManageProviders").onclick=()=>{showView("settings");$("providerSettings").scrollIntoView({behavior:"smooth"});};
+$("marketApiKeys").onclick=()=>{showView("settings");document.getElementById("newApiKeyName").scrollIntoView({behavior:"smooth",block:"center"});};
+$("marketChat").onclick=()=>{$("chatToolbar")?.scrollIntoView({behavior:"smooth"});$("promptInput").focus();};
+document.querySelectorAll("[data-market]").forEach(button=>button.addEventListener("click",()=>{
+ const target=button.dataset.market;
+ if(target==="providers"){$("marketManageProviders").click();return;}
+ if(target==="installed"){showView("models");return;}
+ if(target==="free"){showView("explore");$("catalogFilter").value="small";renderCatalog();return;}
+ showView("explore");
+}));
+$("marketSearch").addEventListener("keydown",event=>{if(event.key==="Enter"){const q=$("marketSearch").value.trim();showView("explore");$("catalogSearch").value=q;renderCatalog();}});
+$("marketSearch").addEventListener("input",()=>{if(!$("marketSearch").value.trim())return;});
