@@ -81,7 +81,7 @@ class AlloRuntime {
       throw new Error("Use a Hugging Face repository ID such as Qwen/Qwen2.5-0.5B-Instruct-GGUF.");
     }
     const filename = fileParts.join(":");
-    if (filename && (!filename.toLowerCase().endsWith(".gguf") || filename.includes("..") || filename.includes("/") || filename.includes("\\"))) {
+    if (filename && (!filename.toLowerCase().endsWith(".gguf") || filename.includes("\\") || filename.split("/").some(part => !part || part === "." || part === ".."))) {
       throw new Error("The optional model filename must be a single .gguf file name.");
     }
     return { repo, filename };
@@ -136,7 +136,7 @@ class AlloRuntime {
         if (done) break;
         completed += value.byteLength;
         if (completed > MAX_MODEL_BYTES) throw new Error("Model exceeds ALLO_MAX_MODEL_BYTES.");
-        await handle.write(value);
+        await handle.writeFile(value);
         onProgress({ status: "Downloading " + filename, completed, total: declared });
       }
       await handle.sync();
