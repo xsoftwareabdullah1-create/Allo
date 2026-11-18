@@ -4,9 +4,28 @@ const path = require("path");
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const OLLAMA_BASE_URL = (process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434").replace(/\/$/, "");
-const ALLOWED = new Set(["GET /api/tags","GET /api/ps","GET /api/version","POST /api/chat","POST /api/generate","POST /api/pull","POST /api/show","POST /api/delete","POST /api/copy","POST /api/create","POST /api/embeddings"]);
+const AUTH_USER = process.env.ALLO_USERNAME;
+const AUTH_PASS = process.env.ALLO_PASSWORD;
+if (process.env.NODE_ENV === "production" && (!AUTH_USER || !AUTH_PASS)) {
+  throw new Error("Set ALLO_USERNAME and ALLO_PASSWORD before running Allo in production.");
+}
+\nconst ALLOWED = new Set(["GET /api/tags","GET /api/ps","GET /api/version","POST /api/chat","POST /api/generate","POST /api/pull","POST /api/show","POST /api/delete","POST /api/copy","POST /api/create","POST /api/embeddings"]);
 
 app.disable("x-powered-by");
+if (AUTH_USER && AUTH_PASS) {
+  app.use((req, res, next) => {
+    const header = req.headers.authorization || "";
+    const supplied = header.startsWith("Basic ") ? Buffer.from(header.slice(6), "base64").toString("utf8") : "";
+    const expected = AUTH_USER + ":" + AUTH_PASS;
+    const a = Buffer.from(supplied);
+    const b = Buffer.from(expected);
+    if (a.length !== b.length || !require("crypto").timingSafeEqual(a, b)) {
+      res.setHeader("WWW-Authenticate", 'Basic realm="Allo", charset="UTF-8"');
+      return res.status(401).send("Authentication required");
+    }
+    next();
+  });
+}
 app.use(express.json({ limit: "25mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
