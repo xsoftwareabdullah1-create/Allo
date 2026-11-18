@@ -62,7 +62,7 @@ async function writeWorkspace(data) {
   await fs.rename(temporary, STORE_FILE);
 }
 
-app.get("/health", (_req, res) => res.json({ ok: true, app: "Allo", engine: "llama.cpp", models: runtime.models.size, loaded: runtime.processes.size }));
+app.get("/health", async (_req, res) => { const binary = await runtime.binaryStatus(); res.status(binary.available ? 200 : 503).json({ ok: binary.available, app: "Allo", engine: "llama.cpp", runtime: binary, models: runtime.models.size, loaded: runtime.processes.size }); });
 app.get("/api/config", (_req, res) => res.json({
   provider: "Allo Native GGUF Runtime",
   engine: "llama.cpp",
@@ -70,7 +70,8 @@ app.get("/api/config", (_req, res) => res.json({
   configured: true,
   modelFormat: "GGUF",
   loadedModels: runtime.processes.size,
-  maxLoadedModels: Number(process.env.ALLO_MAX_LOADED_MODELS || 1)
+  maxLoadedModels: Number(process.env.ALLO_MAX_LOADED_MODELS || 1),
+  runtime: await runtime.binaryStatus()
 }));
 app.get("/api/workspace", async (_req, res) => {
   try { res.json(await readWorkspace()); }
