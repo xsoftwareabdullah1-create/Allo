@@ -161,8 +161,10 @@ class AlloRuntime {
   async start(id) {
     const item = this.get(id);
     if (this.processes.has(id)) {
-      this.processes.get(id).lastUsed = Date.now();
-      return this.processes.get(id);
+      const existing = this.processes.get(id);
+      existing.lastUsed = Date.now();
+      if (existing.ready) await existing.ready;
+      return existing;
     }
     if (this.processes.size >= MAX_LOADED) {
       const oldest = [...this.processes.entries()].sort((a, b) => a[1].lastUsed - b[1].lastUsed)[0];
@@ -171,6 +173,7 @@ class AlloRuntime {
     const port = this.nextPort++;
     const child = spawn(SERVER_BIN, [
       "--model", item.path,
+      "--alias", id,
       "--host", "127.0.0.1",
       "--port", String(port),
       "--ctx-size", String(Number(process.env.ALLO_CONTEXT_SIZE || 4096)),
@@ -184,7 +187,8 @@ class AlloRuntime {
     child.on("exit", () => { if (this.processes.get(id) === record) this.processes.delete(id); });
     this.processes.set(id, record);
     try {
-      await this.waitUntilReady(id, record);
+      record.ready = this.waitUntilReady(id, record);
+      await record.ready;
       return record;
     } catch (error) {
       await this.stop(id);
