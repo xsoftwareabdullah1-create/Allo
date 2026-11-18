@@ -62,3 +62,11 @@ Configure a persistent server environment variable named `ALLO_ENCRYPTION_KEY` b
 
 Example provider configuration: `PUT /api/providers/openai` with `{ "apiKey": "YOUR_KEY", "model": "gpt-4o-mini", "inputPricePerMillion": 0.15, "outputPricePerMillion": 0.60, "monthlyBudgetUsd": 10 }`. The `custom` provider additionally requires an HTTPS `baseUrl` and model ID. Chat requests use `{ "provider": "openai", "messages": [{ "role": "user", "content": "Hello" }] }`.
 \n## Live model catalogue\n\nThe Explore models page queries the Hugging Face model API for GGUF repositories, sorts results by downloads, and supports text search. Select Download model to install a repository. Allo currently selects a preferred single-file quantization (Q4_K_M, then Q4_0, then the first available GGUF). Split GGUF repositories are not supported by this runtime yet. Catalogue availability requires outbound internet access from the Allo server.\n
+
+## Creating Allo API keys
+
+In Settings → API access, enter a key name and choose **Create API key**. Copy the returned token immediately; Allo stores only its SHA-256 hash and cannot display the secret again. Revoke keys from the same screen. Use the token as `Authorization: Bearer allo_...` for the OpenAI-compatible `/v1` routes. Existing `ALLO_API_KEY` remains supported.
+
+## Provider model discovery
+
+Save the provider API key first, then select **Discover available models**. Results are rendered in a normal select control for mobile. Selecting a model fills the Model ID field. Availability depends on the provider account, endpoint region, API permissions and provider's model-list endpoint. If a provider does not expose model listing, enter a documented model ID manually. Live provider model lists are authoritative; defaults are suggestions only.
