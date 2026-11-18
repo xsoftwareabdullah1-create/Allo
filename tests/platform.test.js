@@ -146,7 +146,7 @@ test("Settings exposes direct API keys and billing navigation and cache-busted l
  assert.ok(html.includes('id="providerSettings"'));
  assert.ok(html.includes('id="billingPanel"'));
  assert.ok(html.includes("styles.css?v=20261118-light2"));
- assert.ok(html.includes("app.js?v=20261118-nav2"));
+ assert.ok(html.includes("app.js?v=20261118-api-create3"));
  assert.ok(app.includes("target.scrollIntoView"));
  assert.ok(css.includes("html,body,.app-shell,.main,#chatView,.view"));
 });
