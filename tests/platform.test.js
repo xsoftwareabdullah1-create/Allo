@@ -150,3 +150,7 @@ test("Settings exposes direct API keys and billing navigation and cache-busted l
  assert.ok(app.includes("target.scrollIntoView"));
  assert.ok(css.includes("html,body,.app-shell,.main,#chatView,.view"));
 });
+
+
+test("Allo API keys can be created, listed and revoked without storing plaintext",()=>{const server=read("server.js"),html=read("public/index.html"),js=read("public/app.js");for(const route of ['app.get("/api/keys"','app.post("/api/keys"','app.delete("/api/keys/:id"'])assert.ok(server.includes(route));assert.ok(server.includes('createHash("sha256")'));assert.ok(server.includes('crypto.randomBytes(32)'));assert.ok(html.includes('id="createApiKey"'));assert.ok(html.includes('id="apiKeyList"'));assert.ok(js.includes('api("keys",{method:"POST"'));});
+test("Provider model discovery has visible mobile-selectable results and latest model defaults",()=>{const providers=read("providers.js"),html=read("public/index.html"),js=read("public/app.js");assert.ok(html.includes('id="providerModelSelect"'));assert.ok(js.includes('api("providers/"+id+"/models")'));assert.ok(js.includes('list.append(o)'));for(const model of ['gpt-6.2-astra','gemini-3.8-flash','qwen4-max'])assert.ok(providers.includes(model));});
