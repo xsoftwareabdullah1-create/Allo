@@ -54,7 +54,7 @@ async function readWorkspace() {
 }
 async function writeWorkspace(data) {
   await fs.mkdir(DATA_DIR, { recursive: true });
-  const temporary = STORE_FILE + ".tmp";
+  const temporary = STORE_FILE + "." + process.pid + "." + require("node:crypto").randomUUID() + ".tmp";
   await fs.writeFile(temporary, JSON.stringify(data), { mode: 0o600 });
   await fs.rename(temporary, STORE_FILE);
 }
