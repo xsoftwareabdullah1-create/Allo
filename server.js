@@ -130,7 +130,7 @@ async function pipeOllamaChat(req, res, body) {
   let buffer = "";
   let finished = false;
   const emit = (payload) => { if (!res.destroyed) res.write(JSON.stringify(payload) + "\n"); };
-  req.on("close", () => { if (!finished) reader.cancel().catch(() => {}); });
+  res.on("close", () => { if (!finished) reader.cancel().catch(() => {}); });
   try {
     while (true) {
       const { done, value } = await reader.read();
