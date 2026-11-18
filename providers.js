@@ -24,6 +24,13 @@ const PROVIDERS = {
   siliconflow:{name:"SiliconFlow",kind:"openai",baseUrl:"https://api.siliconflow.com/v1",model:"Qwen/Qwen2.5-7B-Instruct"},
   novita:{name:"Novita AI",kind:"openai",baseUrl:"https://api.novita.ai/v3/openai",model:"meta-llama/llama-3.1-8b-instruct"},
   inference:{name:"Inference.net",kind:"openai",baseUrl:"https://api.inference.net/v1",model:"meta-llama/Llama-3.3-70B-Instruct"},
+  bedrock:{name:"AWS Bedrock (OpenAI-compatible)",kind:"openai",baseUrl:"https://bedrock-mantle.us-east-1.api.aws/v1",model:"meta.llama3-3-70b-instruct-v1:0"},
+  cloudflare:{name:"Cloudflare Workers AI",kind:"openai",baseUrl:"https://api.cloudflare.com/client/v4/accounts/YOUR_ACCOUNT_ID/ai/v1",model:"@cf/meta/llama-3.1-8b-instruct"},
+  vercel:{name:"Vercel AI Gateway",kind:"openai",baseUrl:"https://ai-gateway.vercel.sh/v1",model:"openai/gpt-4o-mini"},
+  sambanova:{name:"SambaNova",kind:"openai",baseUrl:"https://api.sambanova.ai/v1",model:"Meta-Llama-3.3-70B-Instruct"},
+  hyperbolic:{name:"Hyperbolic",kind:"openai",baseUrl:"https://api.hyperbolic.xyz/v1",model:"meta-llama/Meta-Llama-3.1-70B-Instruct"},
+  deepinfra:{name:"DeepInfra",kind:"openai",baseUrl:"https://api.deepinfra.com/v1/openai",model:"meta-llama/Meta-Llama-3.1-70B-Instruct"},
+  minimax:{name:"MiniMax",kind:"openai",baseUrl:"https://api.minimax.io/v1",model:"MiniMax-Text-01"},
   custom:{name:"Custom OpenAI-compatible",kind:"openai",baseUrl:"",model:""}
 };
 
