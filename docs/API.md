@@ -45,3 +45,17 @@ Use the exact local model ID returned by `GET /v1/models`.
 Allo downloads GGUF model files from Hugging Face and starts a local `llama-server` process on demand. It does not proxy requests to an Ollama server. The Docker image builds the inference executable from llama.cpp source.
 
 The initial release is CPU-first and chat-focused. Embeddings, vision, gated Hugging Face authentication and model publishing are planned but not implemented.
+## Universal cloud provider gateway
+Allo can connect multiple hosted providers without Ollama. Supported presets include OpenAI, Anthropic Claude, Google Gemini, DeepSeek, Groq, OpenRouter, Together AI, Fireworks AI, Mistral, xAI, Cerebras and Perplexity, plus a custom OpenAI-compatible HTTPS endpoint.
+
+Configure a persistent server environment variable named `ALLO_ENCRYPTION_KEY` before saving provider credentials. Use a long random secret (for example, `openssl rand -hex 32`) and keep it unchanged across restarts. Provider API keys are encrypted with AES-256-GCM in `data/providers.enc`; keys are never returned by the provider-list API. If this secret is lost or changed, saved provider credentials cannot be decrypted. Cloud providers may charge for usage and require their own API keys.
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/providers` | List provider presets and connection status (never returns keys) |
+| PUT | `/api/providers/:id` | Save an API key, model ID and optional base URL |
+| DELETE | `/api/providers/:id` | Remove saved provider credentials |
+| POST | `/api/providers/:id/test` | Send a short test request |
+| POST | `/api/providers/chat` | Send a non-streaming chat request through a configured provider |
+
+Example provider configuration: `PUT /api/providers/openai` with `{ "apiKey": "YOUR_KEY", "model": "gpt-4o-mini" }`. The `custom` provider additionally requires an HTTPS `baseUrl` and model ID. Chat requests use `{ "provider": "openai", "messages": [{ "role": "user", "content": "Hello" }] }`.
