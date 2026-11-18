@@ -76,7 +76,7 @@ test("first-run onboarding explains and installs a real local model", () => {
 test("assistant messages render escaped markdown and code blocks", () => {
   const js = read("public/app.js");
   assert.ok(js.includes("function renderAssistantMarkdown(value)"));
-  assert.ok(js.includes("escapeHtml(value||"")"));
+  assert.ok(js.includes('escapeHtml(value||"")'));
   assert.ok(js.includes("code-block"));
   assert.ok(js.includes("content.innerHTML=renderAssistantMarkdown(m.content)"));
 });
