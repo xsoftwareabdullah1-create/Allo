@@ -82,6 +82,8 @@ test("assistant messages render escaped markdown and code blocks", () => {
 });
 
 
+test("model creation creates safe aliases without duplicating the GGUF file",()=>{const runtime=read("runtime.js"),server=read("server.js");assert.ok(runtime.includes("async alias(source, destination)"));assert.ok(runtime.includes("stillReferenced"));assert.ok(server.includes('app.post("/api/create", async (req, res) =>'));assert.ok(!server.includes('app.post("/api/create", (_req, res) => res.status(501)'));});
+
 test("runtime reports a clear missing llama-server diagnostic", () => {
   const runtime = read("runtime.js");
   const server = read("server.js");
