@@ -135,7 +135,7 @@ node --check runtime.js
 node --check public/app.js
 ```
 
-See [architecture](docs/ARCHITECTURE.md), [API reference](docs/API.md), [security policy](SECURITY.md), [contribution guide](CONTRIBUTING.md) and [roadmap](ROADMAP.md).
+See [architecture](docs/ARCHITECTURE.md), [API reference](docs/API.md), [security policy](SECURITY.md), [contribution guide](CONTRIBUTING.md), [roadmap](ROADMAP.md) and [third-party notices](THIRD_PARTY_NOTICES.md).
 
 ## License
 MIT for Allo's code. The bundled llama.cpp component retains its upstream license; see the [llama.cpp repository](https://github.com/ggml-org/llama.cpp) for details.
