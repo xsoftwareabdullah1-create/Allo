@@ -6,7 +6,7 @@ const PROVIDERS = {
   openai:{name:"OpenAI",kind:"openai",baseUrl:"https://api.openai.com/v1",model:"gpt-4o-mini"},
   anthropic:{name:"Anthropic Claude",kind:"anthropic",baseUrl:"https://api.anthropic.com/v1",model:"claude-sonnet-4-5"},
   google:{name:"Google Gemini",kind:"gemini",baseUrl:"https://generativelanguage.googleapis.com/v1beta",model:"gemini-2.5-flash"},
-  deepseek:{name:"DeepSeek",kind:"openai",baseUrl:"https://api.deepseek.com/v1",model:"deepseek-chat"},
+  deepseek:{name:"DeepSeek",kind:"openai",baseUrl:"https://api.deepseek.com/v1",model:"deepseek-v4-flash"},
   groq:{name:"Groq",kind:"openai",baseUrl:"https://api.groq.com/openai/v1",model:"openai/gpt-oss-120b"},
   openrouter:{name:"OpenRouter",kind:"openai",baseUrl:"https://openrouter.ai/api/v1",model:"openrouter/auto"},
   together:{name:"Together AI",kind:"openai",baseUrl:"https://api.together.xyz/v1",model:"meta-llama/Llama-3.3-70B-Instruct-Turbo"},
@@ -48,7 +48,7 @@ class ProviderHub {
     await fs.writeFile(tmp,JSON.stringify({iv:iv.toString("base64"),tag:c.getAuthTag().toString("base64"),data:data.toString("base64")}),{mode:0o600});await fs.rename(tmp,this.file);
   }
   async saveUsage(){await fs.mkdir(path.dirname(this.usageFile),{recursive:true});const tmp=this.usageFile+"."+process.pid+".tmp";await fs.writeFile(tmp,JSON.stringify(this.usage,null,2),{mode:0o600});await fs.rename(tmp,this.usageFile);}
-  list(){return Object.entries(PROVIDERS).map(([id,p])=>({id,name:p.name,kind:p.kind,baseUrl:this.configs[id]?.baseUrl||p.baseUrl,model:this.configs[id]?.model||p.model,configured:Boolean(this.configs[id]?.apiKey),hasKey:Boolean(this.configs[id]?.apiKey)}));}
+  list(){return Object.entries(PROVIDERS).map(([id,p])=>({id,name:p.name,kind:p.kind,baseUrl:this.configs[id]?.baseUrl||p.baseUrl,model:this.configs[id]?.model||p.model,inputPricePerMillion:this.configs[id]?.inputPricePerMillion??null,outputPricePerMillion:this.configs[id]?.outputPricePerMillion??null,monthlyBudgetUsd:this.configs[id]?.monthlyBudgetUsd??null,configured:Boolean(this.configs[id]?.apiKey),hasKey:Boolean(this.configs[id]?.apiKey)}));}
   async configure(input){
     const id=String(input.provider||"");if(!PROVIDERS[id]){const e=new Error("Unknown provider.");e.status=400;throw e;}
     const prev=this.configs[id]||{},apiKey=typeof input.apiKey==="string"&&input.apiKey.trim()?input.apiKey.trim():prev.apiKey;
