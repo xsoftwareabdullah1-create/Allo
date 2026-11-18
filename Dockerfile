@@ -13,6 +13,7 @@ ENV ALLO_LLAMACPP_BIN=/opt/llama-install/bin/llama-server
 ENV LD_LIBRARY_PATH=/opt/llama-install/lib
 RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 libcurl4 libssl3 && rm -rf /var/lib/apt/lists/*
 COPY --from=build-runtime /opt/llama-install /opt/llama-install
+RUN /opt/llama-install/bin/llama-server --version
 WORKDIR /app
 COPY package*.json ./
 RUN npm install --omit=dev
