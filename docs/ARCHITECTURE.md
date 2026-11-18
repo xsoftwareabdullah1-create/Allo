@@ -1,40 +1,23 @@
 # Allo architecture
 
-Allo is a browser-based control plane for an Ollama inference server. It does not implement model inference or store model weights itself.
+Allo is a self-hosted AI application with its own model registry, downloader and inference-process manager. It does not require an Ollama daemon or API.
 
 ## Components
-
-- **Browser UI** — static HTML, CSS and JavaScript in `public/`; chat history and prompt snippets are stored in the current browser's local storage.
-- **Allo server** — Express application in `server.js`; serves the UI, applies authentication, validates allowed proxy routes and streams upstream responses.
-- **Workspace store** — `data/workspace.json` persists chats and prompt templates; mount `/app/data` as a persistent volume.
-- **Inference runtime** — Ollama, configured with `OLLAMA_BASE_URL`. Model weights and running model processes live on the Ollama host.
-- **Container deployment** — Docker Compose can run both Allo and Ollama with a persistent model volume.
+- **Browser UI** — static HTML, CSS and JavaScript in `public/`.
+- **Allo server** — Express app in `server.js`; authentication, workspace persistence, model APIs and OpenAI-compatible routes.
+- **Native runtime manager** — `runtime.js`; downloads GGUF files, maintains the local registry, launches and stops llama.cpp processes, and tracks loaded models.
+- **Inference engine** — llama.cpp `llama-server`, compiled into the Docker image.
+- **Storage** — `data/models` for model files, `data/models.json` for registry metadata, and `data/workspace.json` for chats and prompts.
+- **Container image** — Docker build compiles llama.cpp and packages it with Allo.
 
 ## Request flow
+1. Browser sends an authenticated request to Allo.
+2. For downloads, Allo resolves a GGUF file in a Hugging Face repository and streams it into local storage.
+3. For inference, Allo starts a local llama.cpp process for the selected model if one is not loaded.
+4. Allo sends the chat request to that local process and adapts streaming chunks for the UI/API.
+5. Registry and workspace data are persisted under `/app/data`.
 
-1. The browser calls a same-origin Allo endpoint.
-2. The Allo server checks the user's Basic credentials or configured Bearer API key.
-3. Only explicitly allowlisted Ollama API paths are forwarded.
-4. Streaming response chunks are relayed to the browser without buffering the entire completion.
-5. The browser renders the response and updates its local chat history.
+## Runtime boundaries
+Allo owns model discovery, download orchestration, local registry, process lifecycle, API authentication, workspace and UI. llama.cpp is the bundled inference engine. No Ollama container, daemon, URL or API is used.
 
-## API surfaces
-
-- `/api/*` — selected native Ollama endpoints.
-- `/v1/*` — selected OpenAI-compatible Ollama endpoints for SDK integrations.
-- `/api/workspace` — authenticated chat and prompt persistence endpoint.
-- `/health` — Allo process health check.
-
-## Security
-
-- Set `NODE_ENV=production` and configure `ALLO_USERNAME` and `ALLO_PASSWORD`.
-- Set a separate `ALLO_API_KEY` for SDK clients that authenticate with Bearer tokens.
-- Terminate public traffic with HTTPS at a trusted reverse proxy.
-- Do not expose the Ollama port publicly. The Compose file binds it to loopback on the host.
-- Keep secrets in an untracked `.env` file or deployment secret manager.
-- The proxy allowlist is intentional. Do not turn it into an unrestricted URL-forwarding endpoint.
-- Do not put API credentials into browser JavaScript or commit real secrets.
-
-## Current boundaries
-
-Allo is a single-user deployment with browser-local chat and prompt storage. It does not yet provide multi-user accounts, server-side conversation sync, team permissions, billing, hosted inference, or a remote model registry of its own.
+The initial runtime is CPU-first. GPU acceleration, embedding mode, multimodal vision and additional model formats require separate capability work.
