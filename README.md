@@ -1,39 +1,34 @@
 # Allo
 
 <p align="center">
-  <strong>Your AI workspace. Your models. Your infrastructure.</strong><br>
-  A self-hosted web control plane for Ollama, built for local-first AI workflows.
+  <strong>Your AI. Your models. Your runtime.</strong><br>
+  A self-hosted AI platform that downloads and runs GGUF models without an Ollama server.
 </p>
 
 <p align="center">
   <a href="https://github.com/xsoftwareabdullah1-create/Allo/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/xsoftwareabdullah1-create/Allo/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-  <img alt="Node.js 20+" src="https://img.shields.io/badge/Node.js-20%2B-339933?logo=node.js&logoColor=white">
-  <img alt="Ollama" src="https://img.shields.io/badge/runtime-Ollama-black?logo=ollama">
+  <img alt="Node.js 22" src="https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white">
+  <img alt="GGUF" src="https://img.shields.io/badge/models-GGUF-blue">
 </p>
 
-Allo brings model operations and everyday AI work into one interface. Chat with local models, inspect and manage them, compare responses, save prompts, generate embeddings, and connect API clients through an OpenAI-compatible endpoint.
+Allo manages its own model library, downloads model files from Hugging Face, stores them locally, starts and stops inference processes, and serves chat through its own API. It does **not** connect to or require an Ollama server.
 
-**Important distinction:** Allo is the workspace and control plane. [Ollama](https://ollama.com) remains the inference runtime that loads model weights and generates responses.
+The inference executable is built into the Allo Docker image from the open-source [llama.cpp](https://github.com/ggml-org/llama.cpp) project. Allo owns the application layer: model downloads, local storage, process lifecycle, authentication, workspace and APIs. It does not claim to independently reimplement transformer inference mathematics from scratch.
 
-## What you can do
+## Features
+- Local GGUF model library with persistent storage.
+- Download GGUF files directly from Hugging Face repositories.
+- Automatic selection of a Q4_K_M or Q4_0 file when available.
+- Native llama.cpp inference process management.
+- Streaming chat and local model selection.
+- Model inspection, deletion and local file copy.
+- OpenAI-compatible chat and model-list API.
+- Persistent chat and prompt workspace.
+- No Ollama daemon, container, API or paid inference API key.
 
-| Area | Current capabilities |
-|---|---|
-| Chat workspace | Streaming chat, vision image attachments, system prompts, temperature, context size, keep-alive and tool schemas |
-| Model operations | List, inspect, pull, copy, create, push and delete models |
-| Model discovery | Searchable curated model catalogue with one-click pull |
-| Runtime monitor | Inspect models currently loaded by Ollama |
-| Model comparison | Send one prompt to two models and compare responses |
-| Prompt library | Save, reuse and delete prompt templates |
-| Embeddings | Generate and inspect embeddings |
-| API playground | Send requests to supported native Ollama endpoints |
-| Developer API | OpenAI-compatible models, chat completions, completions and embeddings |
-| Workspace sync | Persist chats and prompts on the Allo server |
-
-## Quick start — Docker Compose
-
-Requirements: Docker Engine with the Compose plugin.
+## Quick start — Docker
+Requirements: Docker Engine with Compose plugin. The first build compiles the bundled CPU llama.cpp server and can take several minutes. Model downloads require additional disk space and RAM.
 
 ```bash
 git clone https://github.com/xsoftwareabdullah1-create/Allo.git
@@ -41,112 +36,106 @@ cd Allo
 cp .env.example .env
 ```
 
-Edit `.env` and set unique credentials before starting:
+Edit `.env` and set strong unique credentials:
 
 ```env
 NODE_ENV=production
 PORT=3000
-OLLAMA_BASE_URL=http://ollama:11434
 ALLO_USERNAME=choose-a-username
 ALLO_PASSWORD=replace-with-a-long-random-password
 ALLO_API_KEY=replace-with-a-separate-random-api-key
+ALLO_MAX_LOADED_MODELS=1
+ALLO_CONTEXT_SIZE=4096
+ALLO_GPU_LAYERS=0
 ```
 
-Start the stack:
+Build and start:
 
 ```bash
 docker compose up -d --build
 ```
 
-Open [http://localhost:3000](http://localhost:3000), sign in, then pull a model from Explore. `llama3.2:1b` is a relatively small starting point; actual resource requirements depend on the model and hardware.
+Open [http://localhost:3000](http://localhost:3000), sign in, and open **Models**. Enter a Hugging Face repository ID such as:
 
-Docker Compose stores model weights in `ollama_data` and Allo workspace data in `allo_data`. The Compose configuration does not publish the Ollama port to the public network.
+```text
+Qwen/Qwen2.5-0.5B-Instruct-GGUF
+```
 
-## Run with Node.js
+Allo selects a GGUF file and downloads it into its persistent model store. To choose a specific file, use `owner/repository:folder/model-file.Q4_K_M.gguf`. A small quantized model is a better starting point for machines with limited RAM.
 
-Requirements: Node.js 20+ and an Ollama server reachable from the Allo process.
+## Run without Docker
+Requirements: Node.js 20+ and a locally installed `llama-server` executable from llama.cpp.
 
 ```bash
 npm install
-OLLAMA_BASE_URL=http://127.0.0.1:11434 npm start
+ALLO_LLAMACPP_BIN=/path/to/llama-server npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000). For production, set `NODE_ENV=production`, `ALLO_USERNAME` and `ALLO_PASSWORD`. Allo refuses to start in production without web login credentials.
+Allo stores model files in `data/models`, the model registry in `data/models.json`, and workspace data in `data/workspace.json`.
 
-PowerShell:
+## Runtime configuration
+| Variable | Default | Purpose |
+|---|---:|---|
+| `PORT` | `3000` | Allo web/API port |
+| `ALLO_LLAMACPP_BIN` | `llama-server` | llama.cpp server executable |
+| `ALLO_MAX_LOADED_MODELS` | `1` | Maximum inference processes kept loaded |
+| `ALLO_CONTEXT_SIZE` | `4096` | Context window passed to llama-server |
+| `ALLO_GPU_LAYERS` | `0` | GPU offload layers; bundled Docker image is CPU-first |
+| `ALLO_MAX_MODEL_BYTES` | `53687091200` | Maximum download size (50 GiB) |
+| `ALLO_MODEL_START_TIMEOUT` | `180000` | Model startup timeout in milliseconds |
+| `ALLO_INFERENCE_TIMEOUT` | `900000` | Inference request timeout in milliseconds |
+| `ALLO_USERNAME` | — | Web login username; required in production |
+| `ALLO_PASSWORD` | — | Web login password; required in production |
+| `ALLO_API_KEY` | — | Optional Bearer token for SDK clients |
 
-```powershell
-$env:OLLAMA_BASE_URL="http://127.0.0.1:11434"
-npm start
-```
+Downloaded weights and workspace data persist in the Docker volume `allo_data`. Do not delete this volume unless you intend to delete the downloaded models and workspace.
 
-## Configuration
-
-| Variable | Default | Description |
-|---|---|---|
-| `PORT` | `3000` | HTTP port for the Allo web application |
-| `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | Base URL of the Ollama-compatible inference server |
-| `NODE_ENV` | — | Set to `production` for production startup safeguards |
-| `ALLO_USERNAME` | — | Basic-auth username; required in production |
-| `ALLO_PASSWORD` | — | Basic-auth password; required in production |
-| `ALLO_API_KEY` | — | Optional Bearer token for API clients |
-
-Do not commit secrets. For public deployments, terminate HTTPS at a trusted reverse proxy, use strong unique credentials, restrict network access, and never expose the Ollama port directly to the internet. See [Security](SECURITY.md).
-
-## OpenAI SDK compatibility
-
-Allo exposes selected OpenAI-compatible endpoints under `/v1`:
+## OpenAI-compatible API
+Allo exposes `GET /v1/models` and `POST /v1/chat/completions` for local models:
 
 ```js
 import OpenAI from "openai";
-const client = new OpenAI({
-  baseURL: "https://YOUR_ALLO_HOST/v1",
-  apiKey: process.env.ALLO_API_KEY
-});
+const client = new OpenAI({ baseURL: "http://localhost:3000/v1", apiKey: process.env.ALLO_API_KEY });
 const result = await client.chat.completions.create({
-  model: "llama3.2:1b",
-  messages: [{ role: "user", content: "Explain local AI." }]
+  model: "Qwen/Qwen2.5-0.5B-Instruct-GGUF:Qwen2.5-0.5B-Instruct-Q4_K_M.gguf",
+  messages: [{ role: "user", content: "Hello from Allo" }]
 });
 console.log(result.choices[0].message.content);
 ```
 
-See [API reference](docs/API.md) for supported routes and behavior.
+Use the exact model ID returned by `GET /v1/models`. See [API docs](docs/API.md).
 
 ## Architecture
-
 ```text
-Browser UI -> Allo Node.js server -> Ollama native API
-                                -> Ollama OpenAI-compatible API
-                 |
-                 +-> workspace.json
+Browser / SDK -> Allo Node.js application
+                    |-- model registry and workspace
+                    |-- Hugging Face GGUF downloader
+                    +-- llama-server process manager
+                              |
+                              +-- local GGUF files and CPU inference
 ```
 
-The browser talks to Allo. Allo proxies an explicit endpoint allowlist and stores a single shared workspace in a JSON file. It is not currently a multi-tenant service. See [architecture](docs/ARCHITECTURE.md) and [provider architecture](docs/PROVIDER-ARCHITECTURE.md).
+Allo has no Ollama dependency. llama.cpp is the bundled inference engine; Allo owns model management and orchestration.
+
+## Current limitations
+- The bundled Docker runtime is CPU-first; GPU acceleration is not configured in this initial build.
+- GGUF models are supported; other model formats are not.
+- One model is loaded by default. Increase `ALLO_MAX_LOADED_MODELS` only if the host has sufficient RAM.
+- The initial runtime supports chat and OpenAI-compatible chat completions. Embeddings, vision, model publishing and custom Modelfiles are not implemented yet.
+- Public/private gated Hugging Face repository authentication is not implemented.
+- Authentication is single-user Basic authentication, not multi-user accounts.
+- The project does not claim to have authored the underlying inference engine from scratch; llama.cpp is included under its upstream license.
 
 ## Development
-
 ```bash
 npm install
 npm test
 node --check server.js
+node --check runtime.js
 node --check public/app.js
 ```
 
-See [development guide](docs/DEVELOPMENT.md), [contribution guide](CONTRIBUTING.md), [security policy](SECURITY.md) and [roadmap](ROADMAP.md).
-
-## Current scope and limitations
-
-- Allo is a control plane, not an inference engine; an Ollama-compatible server is required.
-- Authentication is currently single-user Basic authentication, not user accounts, teams or role-based access control.
-- Workspace persistence is a single shared JSON store, not a multi-tenant database.
-- The Explore catalogue is curated, not a live mirror of every model registry.
-- Tool schemas can be sent to Ollama, but returned tool calls are displayed rather than automatically executed.
-- CI checks syntax and repository tests; a green run does not prove live Ollama integration or every model has been tested.
-
-## Project direction
-
-The goal is to make Allo a dependable, polished and extensible local-AI workspace. Planned work is tracked in [ROADMAP.md](ROADMAP.md). Bug reports and focused feature requests are welcome.
+See [architecture](docs/ARCHITECTURE.md), [API reference](docs/API.md), [security policy](SECURITY.md), [contribution guide](CONTRIBUTING.md) and [roadmap](ROADMAP.md).
 
 ## License
-
-MIT. See [LICENSE](LICENSE).
+MIT for Allo's code. The bundled llama.cpp component retains its upstream license; see the [llama.cpp repository](https://github.com/ggml-org/llama.cpp) for details.
