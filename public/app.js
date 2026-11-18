@@ -78,4 +78,5 @@ $("embeddingRun").onclick=async()=>{const model=$("embeddingModel").value,input=
 $("apiRun").onclick=async()=>{const method=$("apiMethod").value,endpoint=$("apiEndpoint").value;let body={};try{if(method!=="GET")body=JSON.parse($("apiBody").value||"{}");}catch{return toast("Request body must be valid JSON.");}$("apiRun").disabled=true;$("apiResult").textContent="Requesting…";try{const response=await api(endpoint,{method,body:method==="GET"?undefined:JSON.stringify(body)});const raw=await response.text();let formatted=raw;try{formatted=JSON.stringify(JSON.parse(raw),null,2);}catch{}$("apiResult").textContent=formatted;}catch(e){$("apiResult").textContent=e.message;}finally{$("apiRun").disabled=false;}};
 
 document.addEventListener("keydown",e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();newChat();}});
-$("temperature").addEventListener("input",()=>{$("temperatureValue").textContent=$("temperature").value;});\nrenderMessages();renderHistory();loadModels();loadSettings();
+$("temperature").addEventListener("input",()=>{$("temperatureValue").textContent=$("temperature").value;});
+renderMessages();renderHistory();loadModels();loadSettings();
