@@ -185,6 +185,36 @@ async function pipeRuntimeChat(req, res, body) {
   }
 }
 
+app.get("/api/catalog", async (req, res) => {
+  const query = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 100) : "";
+  const limit = Math.min(40, Math.max(1, Number(req.query.limit) || 30));
+  const params = new URLSearchParams({ filter: "gguf", sort: "downloads", direction: "-1", limit: String(limit) });
+  if (query) params.set("search", query);
+  try {
+    const upstream = await fetch("https://huggingface.co/api/models?" + params.toString(), {
+      headers: { Accept: "application/json", "User-Agent": "Allo-AI-Model-Catalog/1.0" },
+      signal: AbortSignal.timeout(20000)
+    });
+    if (!upstream.ok) throw new Error("Hugging Face catalogue returned " + upstream.status);
+    const rows = await upstream.json();
+    const models = rows.filter(item => item && typeof item.id === "string").map(item => ({
+      repo: item.id,
+      name: item.id.split("/").pop(),
+      author: item.id.includes("/") ? item.id.split("/")[0] : "",
+      downloads: Number(item.downloads || 0),
+      likes: Number(item.likes || 0),
+      updatedAt: item.lastModified || null,
+      tags: Array.isArray(item.tags) ? item.tags : [],
+      task: (item.tags || []).includes("text-generation") ? "chat" : "other",
+      library: "GGUF"
+    }));
+    res.setHeader("Cache-Control", "public, max-age=300");
+    res.json({ models, source: "Hugging Face", query, count: models.length });
+  } catch (error) {
+    res.status(502).json({ error: "Could not load the live GGUF catalogue.", detail: error.message });
+  }
+});
+
 app.get("/api/tags", (_req, res) => res.json({ models: runtime.list() }));
 app.get("/api/ps", (_req, res) => res.json({ models: runtime.running() }));
 app.get("/api/version", (_req, res) => res.json({ version: "Allo Native Runtime 1.0", engine: "llama.cpp" }));
