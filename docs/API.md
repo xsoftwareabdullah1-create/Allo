@@ -46,16 +46,18 @@ Allo downloads GGUF model files from Hugging Face and starts a local `llama-serv
 
 The initial release is CPU-first and chat-focused. Embeddings, vision, gated Hugging Face authentication and model publishing are planned but not implemented.
 ## Universal cloud provider gateway
-Allo can connect multiple hosted providers without Ollama. Supported presets include OpenAI, Anthropic Claude, Google Gemini, DeepSeek, Groq, OpenRouter, Together AI, Fireworks AI, Mistral, xAI, Cerebras and Perplexity, plus a custom OpenAI-compatible HTTPS endpoint.
+Allo can connect multiple hosted providers without Ollama. Supported presets include OpenAI, Anthropic Claude, Google Gemini, DeepSeek, Groq, OpenRouter, Together AI, Fireworks AI, Mistral, xAI, Cerebras, Perplexity, Cohere, NVIDIA NIM, Hugging Face Inference, Qwen/DashScope, Moonshot Kimi, Z.ai/GLM, SiliconFlow, Novita AI and Inference.net, plus a custom OpenAI-compatible HTTPS endpoint. This is a growing provider directory, not a claim that every AI model worldwide is individually integrated. Aggregators such as OpenRouter and Hugging Face expose many model families through one connection.
 
-Configure a persistent server environment variable named `ALLO_ENCRYPTION_KEY` before saving provider credentials. Use a long random secret (for example, `openssl rand -hex 32`) and keep it unchanged across restarts. Provider API keys are encrypted with AES-256-GCM in `data/providers.enc`; keys are never returned by the provider-list API. If this secret is lost or changed, saved provider credentials cannot be decrypted. Cloud providers may charge for usage and require their own API keys.
+Configure a persistent server environment variable named `ALLO_ENCRYPTION_KEY` before saving provider credentials. Use a long random secret (for example, `openssl rand -hex 32`) and keep it unchanged across restarts. Provider API keys are encrypted with AES-256-GCM in `data/providers.enc`; keys are never returned by the provider-list API. If this secret is lost or changed, saved provider credentials cannot be decrypted. Cloud providers may charge for usage and require their own API keys. The usage ledger records provider-reported token counts when returned. Enter the provider current input/output USD price per million tokens and an optional monthly budget in Settings to calculate an estimate. Estimates are not invoices or live account balances; provider billing dashboards remain authoritative.
 
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/api/providers` | List provider presets and connection status (never returns keys) |
+| GET | `/api/providers/:id/models` | Discover model IDs exposed by a connected provider |
+| GET | `/api/billing` | Read local usage ledger and estimated monthly costs |
 | PUT | `/api/providers/:id` | Save an API key, model ID and optional base URL |
 | DELETE | `/api/providers/:id` | Remove saved provider credentials |
 | POST | `/api/providers/:id/test` | Send a short test request |
 | POST | `/api/providers/chat` | Send a non-streaming chat request through a configured provider |
 
-Example provider configuration: `PUT /api/providers/openai` with `{ "apiKey": "YOUR_KEY", "model": "gpt-4o-mini" }`. The `custom` provider additionally requires an HTTPS `baseUrl` and model ID. Chat requests use `{ "provider": "openai", "messages": [{ "role": "user", "content": "Hello" }] }`.
+Example provider configuration: `PUT /api/providers/openai` with `{ "apiKey": "YOUR_KEY", "model": "gpt-4o-mini", "inputPricePerMillion": 0.15, "outputPricePerMillion": 0.60, "monthlyBudgetUsd": 10 }`. The `custom` provider additionally requires an HTTPS `baseUrl` and model ID. Chat requests use `{ "provider": "openai", "messages": [{ "role": "user", "content": "Hello" }] }`.
