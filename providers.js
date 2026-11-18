@@ -85,7 +85,7 @@ class ProviderHub {
     const r=await fetch(url,{headers,signal:AbortSignal.timeout(30000)}),d=await r.json().catch(()=>({}));
     if(!r.ok){const detail=d.error?.message||d.error?.type||d.message||JSON.stringify(d).slice(0,300);const e=new Error("Model discovery failed ("+r.status+"): "+detail);e.status=r.status;throw e;}
     const items=Array.isArray(d.data)?d.data:Array.isArray(d.models)?d.models:Array.isArray(d)?d:[];
-    const models=items.map(m=>{const raw=String(m.id||m.name||"");const modelId=p.kind==="gemini"?raw.replace(/^models\\//,""):raw;return{id:modelId,name:String(m.display_name||m.displayName||m.name||raw).replace(/^models\\//,"")};}).filter(m=>m.id);
+    const models=items.map(m=>{const raw=String(m.id||m.name||"");const modelId=p.kind==="gemini"?raw.replace(/^models\//,""):raw;return{id:modelId,name:String(m.display_name||m.displayName||m.name||raw).replace(/^models\//,"")};}).filter(m=>m.id);
     if(!models.length){const e=new Error("Provider returned no models from its /models endpoint. Check API key, base URL and model-list support; you can still enter a model ID manually.");e.status=502;throw e;}
     return models.sort((a,b)=>a.id.localeCompare(b.id));
   }
