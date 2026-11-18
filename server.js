@@ -29,10 +29,14 @@ app.use((req, res, next) => {
 if (AUTH_USER && AUTH_PASS) {
   app.use((req, res, next) => {
     const header = req.headers.authorization || "";
-    if (API_KEY && header.startsWith("Bearer ")) {
-      const supplied = Buffer.from(header.slice(7));
-      const expected = Buffer.from(API_KEY);
-      if (supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected)) return next();
+    if (header.startsWith("Bearer ")) {
+      const token = header.slice(7), supplied = Buffer.from(token);
+      if (API_KEY) { const expected = Buffer.from(API_KEY); if (supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected)) return next(); }
+      try {
+        const saved = JSON.parse(await fs.readFile(path.join(DATA_DIR, "api-keys.json"), "utf8"));
+        const digest = crypto.createHash("sha256").update(token).digest("hex");
+        if (saved.some(item => item.hash && item.hash.length === digest.length && crypto.timingSafeEqual(Buffer.from(item.hash), Buffer.from(digest)))) return next();
+      } catch (error) { if (error.code !== "ENOENT" && !(error instanceof SyntaxError)) return res.status(500).send("API key store unavailable"); }
     }
     const basic = header.startsWith("Basic ") ? Buffer.from(header.slice(6), "base64").toString("utf8") : "";
     const a = Buffer.from(basic);
@@ -63,6 +67,12 @@ async function writeWorkspace(data) {
   await fs.writeFile(temporary, JSON.stringify(data), { mode: 0o600 });
   await fs.rename(temporary, STORE_FILE);
 }
+
+async function readApiKeys(){try{const rows=JSON.parse(await fs.readFile(path.join(DATA_DIR,"api-keys.json"),"utf8"));return Array.isArray(rows)?rows:[];}catch(e){if(e.code==="ENOENT")return [];throw e;}}
+async function writeApiKeys(rows){await fs.mkdir(DATA_DIR,{recursive:true});const target=path.join(DATA_DIR,"api-keys.json"),tmp=target+"."+process.pid+".tmp";await fs.writeFile(tmp,JSON.stringify(rows,null,2),{mode:0o600});await fs.rename(tmp,target);}
+app.get("/api/keys",async(_req,res)=>{try{res.json({keys:(await readApiKeys()).map(({id,name,prefix,createdAt,lastFour})=>({id,name,prefix,createdAt,lastFour}))});}catch(e){res.status(500).json({error:"Could not read API keys."});}});
+app.post("/api/keys",async(req,res)=>{const name=String(req.body?.name||"").trim().slice(0,60);if(!name)return res.status(400).json({error:"Give this API key a name."});try{const rows=await readApiKeys();if(rows.length>=25)return res.status(400).json({error:"Maximum 25 API keys. Revoke one before creating another."});const token="allo_"+crypto.randomBytes(32).toString("base64url");const row={id:crypto.randomUUID(),name,prefix:"allo_",lastFour:token.slice(-4),hash:crypto.createHash("sha256").update(token).digest("hex"),createdAt:new Date().toISOString()};rows.push(row);await writeApiKeys(rows);res.status(201).json({key:{id:row.id,name:row.name,prefix:row.prefix,lastFour:row.lastFour,createdAt:row.createdAt},token});}catch(e){res.status(500).json({error:"Could not create API key."});}});
+app.delete("/api/keys/:id",async(req,res)=>{try{const rows=await readApiKeys(),next=rows.filter(row=>row.id!==req.params.id);if(next.length===rows.length)return res.status(404).json({error:"API key not found."});await writeApiKeys(next);res.json({ok:true});}catch(e){res.status(500).json({error:"Could not revoke API key."});}});
 
 app.get("/api/providers", (_req, res) => res.json({ providers: providers.list(), encryptionReady: Boolean(process.env.ALLO_ENCRYPTION_KEY) }));
 app.get("/api/providers/:id/models", async (req,res)=>{try{res.json({models:await providers.models(req.params.id)});}catch(error){res.status(error.status||502).json({error:error.message});}});
