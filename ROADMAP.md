@@ -1,46 +1,40 @@
 # Allo Roadmap
 
-This roadmap describes intended direction, not guaranteed delivery dates. Priorities may change as the project is tested with real users.
+This roadmap describes intended direction, not guaranteed delivery dates.
 
 ## Product principles
-
-1. Local-first: users choose where inference runs.
-2. Transparent: explain what data leaves the browser and where it is stored.
-3. Safe by default: protect model endpoints and workspace data.
+1. Local-first: inference runs on infrastructure controlled by the user.
+2. Transparent: model format, hardware requirements and data flow are documented.
+3. Safe by default: protect model files, runtime processes and workspace data.
 4. Useful before flashy: reliability comes before visual effects.
-5. Extensible: keep provider and storage boundaries understandable.
+5. Extensible: model capabilities and runtime backends remain explicit.
 
-## Now — reliability foundation
+## Now — native runtime
+- [x] Remove the Ollama server dependency.
+- [x] Bundle llama.cpp server in the Docker build.
+- [x] Download GGUF models from public Hugging Face repositories.
+- [x] Persist model registry and weights locally.
+- [x] Start and stop local inference processes on demand.
+- [x] Stream local chat responses through Allo APIs.
+- [ ] Docker build verification in CI.
+- [ ] Download resume, checksums and integrity verification.
+- [ ] Hardware detection and memory-aware model recommendations.
+- [ ] GPU-enabled build profiles.
 
-- [x] Core Ollama workspace and model operations
-- [x] Streaming chat and vision image inputs
-- [x] OpenAI-compatible proxy endpoints
-- [x] Single-user authentication and persistent workspace
-- [x] Contributor, security and architecture documentation
-- [ ] Automated HTTP integration tests with a mock Ollama server
-- [ ] Request timeout, cancellation and upstream disconnect handling
-- [ ] Security headers, request limits and structured errors
-- [ ] Accessibility and mobile usability audit
-- [ ] Reproducible dependency installation and dependency review
+## Next — model runtime capabilities
+- [ ] Embedding model mode and vector APIs.
+- [ ] Vision models with multimodal projector support.
+- [ ] Gated Hugging Face authentication.
+- [ ] Runtime process metrics, logs and cancellation.
+- [ ] Model metadata, quantization and context inspection.
+- [ ] Concurrent model scheduling with memory budgets.
 
-## Next — everyday AI workspace
+## Later — platform capabilities
+- [ ] Document ingestion and local RAG.
+- [ ] Agent workflows with explicit tool permissions and approval.
+- [ ] Additional model formats and inference backends.
+- [ ] Multi-user accounts, roles and isolated workspaces.
+- [ ] Database-backed history and backups.
+- [ ] Plugin and tool integration framework.
 
-- [ ] Searchable chat history, rename, pin and export
-- [ ] Import/export workspace backup with schema versioning
-- [ ] Safe Markdown rendering and code-copy actions
-- [ ] Model capability labels and hardware guidance
-- [ ] Live model registry search with source attribution
-- [ ] Per-model generation defaults
-- [ ] Document chat with local retrieval (RAG), citations and source management
-
-## Later — extensible platform
-
-- [ ] Provider adapter interface beyond Ollama
-- [ ] Optional remote OpenAI-compatible provider configuration
-- [ ] Agent workflows with explicit tool permission and execution approval
-- [ ] Multi-user accounts, roles and isolated workspaces
-- [ ] Database-backed storage and migrations
-- [ ] Audit log, admin settings and operational metrics
-- [ ] Plugin and tool integration framework
-
-Security, data integrity and core workflow bugs take priority over new integrations. Open an issue with a concrete use case to help shape the roadmap.
+Reliability, data integrity and security take priority over adding more providers or decorative features.
