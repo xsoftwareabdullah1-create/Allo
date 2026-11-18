@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#f5f7fb"><meta name="description" content="Allo — bright universal AI workspace">
-  <title>Allo — Universal AI Workspace</title><link rel="stylesheet" href="/styles.css?v=20261118-light3">
+  <meta name="theme-color" content="#05090b"><meta name="description" content="Allo — multi-model AI workspace">
+  <title>Allo — Universal AI Workspace</title><link rel="stylesheet" href="/styles.css?v=20261118-openrouter1">
 </head>
 <body>
 <div class="app-shell">
@@ -29,6 +29,18 @@
   <main class="main">
     <header class="topbar"><button class="mobile-menu" id="menuToggle">☰</button><div class="crumb">Workspace <span>/</span> <b id="pageTitle">Chat</b></div><div class="top-actions"><span class="server-pill"><i id="topDot"></i><span id="serverLabel">Connecting</span></span><button class="icon-button" id="refreshBtn" title="Refresh">↻</button></div></header>
     <section class="view active" id="chatView">
+      <section class="market-home" aria-label="Allo model marketplace">
+        <div class="market-topline"><div class="market-brand"><span class="market-logo">a</span><span>allo</span><small>AI WORKSPACE</small></div><button class="market-dashboard-link" id="marketApiKeys">API keys <span>↗</span></button></div>
+        <div class="market-search"><span>⌕</span><input id="marketSearch" type="search" placeholder="Search models, providers, and tools…" autocomplete="off"><kbd>↵</kbd></div>
+        <div class="market-tabs"><span class="market-tab muted">↗ Trending</span><span class="market-tab selected">▥ Popular</span><span class="market-live"><i></i> Live workspace</span></div>
+        <div class="market-chips"><button data-market="explore">Open models</button><button data-market="providers">Cloud providers</button><button data-market="free">Free & local</button><button data-market="installed">Installed</button></div>
+        <div class="market-hero"><div class="market-eyebrow">ONE WORKSPACE. MANY MODELS.</div><h1>The future is<br>multi-model.</h1><p>Discover open models, connect cloud providers, and run AI from one clean workspace. Choose the model that fits the task.</p><div class="market-actions"><button class="market-primary" id="marketDiscover">Discover models <span>→</span></button><button class="market-secondary" id="marketChat">Open AI chat</button></div><div class="market-stats"><div><strong id="marketModelCount">—</strong><span>installed models</span></div><div><strong id="marketProviderCount">28</strong><span>provider options</span></div><div><strong>1</strong><span>workspace</span></div></div></div>
+        <div class="market-section-head"><div><h2>Models in your workspace</h2><p>Installed local models and connected AI providers</p></div><button id="marketSeeAll">Explore all <span>→</span></button></div>
+        <div class="market-model-grid" id="marketModelGrid"><div class="market-model-card skeleton"></div><div class="market-model-card skeleton"></div><div class="market-model-card skeleton"></div></div>
+        <div class="market-section-head provider-head"><div><h2>One workspace for every provider</h2><p>Connect your own API keys. Provider charges may apply.</p></div><button id="marketManageProviders">Manage providers <span>→</span></button></div>
+        <div class="market-provider-strip" id="marketProviderStrip"><span>OpenAI</span><span>Anthropic</span><span>Google Gemini</span><span>DeepSeek</span><span>OpenRouter</span><span>Groq</span></div>
+        <div class="market-bottom-note"><span>●</span> Local inference requires a compatible runtime. Cloud models require your own provider API key.</div>
+      </section>
       <div class="chat-toolbar"><div><div class="eyebrow">YOUR PRIVATE AI</div><h1>What can I help you with?</h1></div><div class="chat-model-controls"><select id="providerSelect" aria-label="AI provider"><option value="">Local GGUF</option></select><select id="modelSelect" aria-label="Select local model"><option value="">Loading models…</option></select></div></div>
       <details class="chat-options"><summary>Generation settings</summary><div class="chat-options-grid"><label>System instructions<textarea id="systemPrompt" rows="2" placeholder="Optional behavior and response instructions…"></textarea></label><label>Temperature <span id="temperatureValue">0.7</span><input id="temperature" type="range" min="0" max="2" step="0.1" value="0.7"></label><label>Context window<input id="contextSize" type="number" min="512" max="131072" step="512" value="4096"></label><label>Keep model loaded<select id="keepAlive"><option value="5m">5 minutes</option><option value="30m">30 minutes</option><option value="1h">1 hour</option><option value="-1">Always</option><option value="0">Unload after response</option></select></label><label class="tools-schema">Tool definitions (optional JSON)<textarea id="toolDefinitions" rows="3" placeholder='[{"type":"function","function":{"name":"lookup_weather","description":"Look up weather","parameters":{"type":"object","properties":{"city":{"type":"string"}},"required":["city"]}}}]'></textarea></label></div></details>
       <div class="messages" id="messages"><div class="welcome" id="welcome"><div class="welcome-orb">a</div><h2>Your models. Your machine. Your data.</h2><p>Choose a local GGUF model and start a conversation. All inference runs locally through Allo's bundled runtime.</p><div class="suggestions"><button data-prompt="Explain how local language models work.">Explain local AI <span>↗</span></button><button data-prompt="Write a Python script that organizes files by extension.">Write some code <span>↗</span></button><button data-prompt="Give me a practical learning plan for machine learning.">Make a learning plan <span>↗</span></button></div></div></div>
