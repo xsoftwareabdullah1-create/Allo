@@ -14,6 +14,11 @@
     <button class="nav-item active" data-view="chat"><span>▤</span> Chat</button>
     <button class="nav-item" data-view="models"><span>◈</span> Models <span class="nav-count" id="modelCount">—</span></button>
     <button class="nav-item" data-view="running"><span>◉</span> Running</button>
+    <button class="nav-item" data-view="explore"><span>⌕</span> Explore models</button>
+    <button class="nav-item" data-view="compare"><span>⇄</span> Compare models</button>
+    <button class="nav-item" data-view="prompts"><span>▧</span> Prompt library</button>
+    <button class="nav-item" data-view="embeddings"><span>⌗</span> Embeddings</button>
+    <button class="nav-item" data-view="playground"><span>⌘</span> API playground</button>
     <div class="side-label history-label">RECENT CHATS <button id="clearHistory">Clear</button></div>
     <div class="history" id="history"><div class="empty-history">Your conversations will appear here.</div></div>
     <div class="sidebar-bottom"><div class="connection"><i id="connectionDot"></i><span id="connectionText">Checking server…</span></div><button class="nav-item" data-view="settings"><span>⚙</span> Settings</button><a class="docs-link" href="https://github.com/ollama/ollama/blob/main/docs/api.md" target="_blank" rel="noreferrer">API documentation ↗</a></div>
@@ -30,6 +35,30 @@
       <div class="install-panel"><div><b>Create a model</b><p>Build a named model from one already installed on your server.</p></div><div class="inline-form"><input id="createName" placeholder="New model name"><input id="createFrom" placeholder="Base model name"><button class="primary-button" id="createBtn">Create</button></div></div><div class="section-title"><h2>Installed models</h2><button class="text-button" id="modelsRefresh">Refresh ↻</button></div><div class="model-grid" id="modelGrid"><div class="loading-card">Loading models…</div></div>
     </section>
     <section class="view page-view" id="runningView"><div class="page-heading"><div><div class="eyebrow">ACTIVE PROCESSES</div><h1>Running models</h1><p>Models currently loaded in memory on your server.</p></div><button class="secondary-button" id="runningRefresh">Refresh ↻</button></div><div class="table-wrap"><table><thead><tr><th>MODEL</th><th>SIZE</th><th>PROCESSOR</th><th>UNTIL</th><th></th></tr></thead><tbody id="runningTable"><tr><td colspan="5" class="table-empty">Loading…</td></tr></tbody></table></div></section>
+    <section class="view page-view" id="exploreView">
+      <div class="page-heading"><div><div class="eyebrow">DISCOVER OPEN MODELS</div><h1>Explore models</h1><p>Browse popular open models and pull them to your connected Ollama server.</p></div><a class="primary-link" href="https://ollama.com/library" target="_blank" rel="noreferrer">Full model catalogue ↗</a></div>
+      <div class="toolbar-row"><input id="catalogSearch" placeholder="Search models, tasks or families…"><select id="catalogFilter"><option value="all">All categories</option><option value="chat">Chat & reasoning</option><option value="code">Coding</option><option value="vision">Vision</option><option value="small">Small & mobile</option></select></div>
+      <div class="catalog-grid" id="catalogGrid"></div>
+    </section>
+    <section class="view page-view" id="compareView">
+      <div class="page-heading"><div><div class="eyebrow">SIDE-BY-SIDE EVALUATION</div><h1>Compare models</h1><p>Send the same prompt to two installed models and compare their outputs.</p></div></div>
+      <div class="compare-selectors"><label>Model A<select id="compareA"></select></label><label>Model B<select id="compareB"></select></label></div>
+      <textarea class="large-input" id="comparePrompt" rows="4" placeholder="Enter a prompt for both models…"></textarea><button class="primary-button" id="compareRun">Run comparison</button><div class="compare-results" id="compareResults"><div class="compare-empty">Your model responses will appear here.</div></div>
+    </section>
+    <section class="view page-view" id="promptsView">
+      <div class="page-heading"><div><div class="eyebrow">REUSABLE INSTRUCTIONS</div><h1>Prompt library</h1><p>Save reusable system prompts and send them directly to chat.</p></div></div>
+      <div class="prompt-editor"><input id="promptTitle" placeholder="Prompt name"><textarea id="promptBody" rows="5" placeholder="Write a system prompt or reusable instruction…"></textarea><button class="primary-button" id="savePrompt">Save prompt</button></div><div class="prompt-grid" id="promptGrid"></div>
+    </section>
+    <section class="view page-view" id="embeddingsView">
+      <div class="page-heading"><div><div class="eyebrow">VECTOR REPRESENTATIONS</div><h1>Embeddings</h1><p>Generate vector embeddings for text using an embedding model installed on your server.</p></div></div>
+      <div class="settings-card"><label>Embedding model</label><select id="embeddingModel"></select><label>Input text</label><textarea id="embeddingInput" rows="5" placeholder="Paste text to embed…"></textarea><button class="primary-button" id="embeddingRun">Generate embeddings</button><div class="result-meta" id="embeddingMeta"></div><pre class="api-result" id="embeddingResult">Embedding output will appear here.</pre></div>
+    </section>
+    <section class="view page-view" id="playgroundView">
+      <div class="page-heading"><div><div class="eyebrow">DEVELOPER TOOLS</div><h1>API playground</h1><p>Call supported Ollama API endpoints through your secured Allo backend.</p></div></div>
+      <div class="playground-controls"><select id="apiMethod"><option>GET</option><option>POST</option></select><select id="apiEndpoint"><option value="tags">/api/tags</option><option value="ps">/api/ps</option><option value="version">/api/version</option><option value="show">/api/show</option><option value="embed">/api/embed</option><option value="embeddings">/api/embeddings</option></select><button class="primary-button" id="apiRun">Send request</button></div><textarea class="api-body" id="apiBody" rows="7">{
+  "model": "llama3.2:1b"
+}</textarea><pre class="api-result" id="apiResult">Response will appear here.</pre>
+    </section>
     <section class="view page-view" id="settingsView"><div class="page-heading"><div><div class="eyebrow">PREFERENCES</div><h1>Settings</h1><p>Connection details and workspace preferences.</p></div></div><div class="settings-card"><h2>Ollama connection</h2><p>Allo's backend connects to the Ollama API using the server environment variable.</p><label>Configured endpoint</label><div class="setting-value" id="endpointValue">Loading…</div><div class="setting-note">Set <code>OLLAMA_BASE_URL</code> on the server, for example <code>http://127.0.0.1:11434</code>. Restart the server after changing it.</div><div class="setting-actions"><button class="secondary-button" id="testConnection">Test connection</button><span id="testResult"></span></div></div><div class="settings-card"><h2>About Allo</h2><p>Allo is an open-source web workspace for Ollama-compatible model servers. It does not host or download model weights itself; model operations are handled by your connected server.</p><div class="setting-note">Backend status: <span id="healthValue">Checking…</span></div><a class="docs-link dark-link" href="https://github.com/xsoftwareabdullah1-create/Allo" target="_blank" rel="noreferrer">Source code on GitHub ↗</a></div></section>
     <div class="toast" id="toast" role="status"></div>
   </main>
