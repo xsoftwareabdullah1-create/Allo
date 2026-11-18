@@ -1,5 +1,6 @@
 const $ = (id) => document.getElementById(id);
-let savedChats=[];try{savedChats=JSON.parse(localStorage.getItem("allo.chats")||"[]");}catch{}\nconst state = { models: [], messages: [], chats: savedChats, currentChat: null, busy: false, abort: null };
+let savedChats=[];try{savedChats=JSON.parse(localStorage.getItem("allo.chats")||"[]");}catch{}
+const state = { models: [], messages: [], chats: savedChats, currentChat: null, busy: false, abort: null };
 const api = async (path, options={}) => {
   const response = await fetch("/api/" + path, { ...options, headers: { "Content-Type":"application/json", ...(options.headers||{}) } });
   if (!response.ok) { let detail; try { detail = await response.json(); } catch { detail = { error: await response.text() }; } throw new Error(detail.detail || detail.error || ("Request failed: " + response.status)); }
