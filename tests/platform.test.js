@@ -63,3 +63,20 @@ test("API documents native GGUF model downloads", () => {
   assert.ok(api.includes("GGUF"));
   assert.ok(api.includes("/v1/chat/completions"));
 });
+test("first-run onboarding explains and installs a real local model", () => {
+  const html = read("public/index.html");
+  const js = read("public/app.js");
+  assert.ok(js.includes("function renderWelcome()"));
+  assert.ok(js.includes("async function installStarterModel()"));
+  assert.ok(js.includes("Qwen/Qwen2.5-0.5B-Instruct-GGUF"));
+  assert.ok(js.includes('api("pull"'));
+  assert.ok(html.includes("What can I help you with?"));
+});
+
+test("assistant messages render escaped markdown and code blocks", () => {
+  const js = read("public/app.js");
+  assert.ok(js.includes("function renderAssistantMarkdown(value)"));
+  assert.ok(js.includes("escapeHtml(value||"")"));
+  assert.ok(js.includes("code-block"));
+  assert.ok(js.includes("content.innerHTML=renderAssistantMarkdown(m.content)"));
+});
