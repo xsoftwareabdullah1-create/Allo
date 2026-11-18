@@ -45,3 +45,12 @@ test("workspace persistence endpoints are authenticated and validated", () => {
   assert.match(server, /prompts\.length > 500/);
   assert.match(server, /fs\.rename\(temporary, STORE_FILE\)/);
 });
+
+test("chat UI supports image inputs for vision models", () => {
+  const html = read("public/index.html");
+  const js = read("public/app.js");
+  assert.match(html, /id="imageInput"/);
+  assert.match(js, /selectedImages/);
+  assert.match(js, /FileReader/);
+  assert.match(js, /images:m\.images\.map/);
+});
