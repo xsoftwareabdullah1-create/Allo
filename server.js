@@ -9,7 +9,8 @@ const AUTH_PASS = process.env.ALLO_PASSWORD;
 if (process.env.NODE_ENV === "production" && (!AUTH_USER || !AUTH_PASS)) {
   throw new Error("Set ALLO_USERNAME and ALLO_PASSWORD before running Allo in production.");
 }
-\nconst ALLOWED = new Set(["GET /api/tags","GET /api/ps","GET /api/version","POST /api/chat","POST /api/generate","POST /api/pull","POST /api/show","POST /api/delete","POST /api/copy","POST /api/create","POST /api/embeddings"]);
+
+const ALLOWED = new Set(["GET /api/tags","GET /api/ps","GET /api/version","POST /api/chat","POST /api/generate","POST /api/pull","POST /api/show","POST /api/delete","POST /api/copy","POST /api/create","POST /api/embeddings"]);
 
 app.disable("x-powered-by");
 if (AUTH_USER && AUTH_PASS) {
