@@ -62,3 +62,11 @@ test("chat exposes tool definitions and renders tool-call responses", () => {
   assert.match(js, /data\.message\?\.tool_calls/);
   assert.match(js, /Tool calls:/);
 });
+
+test("model management includes metadata inspection and registry publishing", () => {
+  const html = read("public/index.html");
+  const js = read("public/app.js");
+  assert.match(html, /id="modelModal"/);
+  assert.match(js, /async function modelInfo/);
+  assert.match(js, /async function pushModel/);
+});
