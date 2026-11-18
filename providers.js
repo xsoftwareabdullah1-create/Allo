@@ -75,8 +75,8 @@ class ProviderHub {
     const month=new Date().toISOString().slice(0,7),rows=Object.entries(this.usage.providers||{}).map(([id,v])=>{const c=this.configs[id]||{},m=(v.months||{})[month]||{requests:0,inputTokens:0,outputTokens:0,estimatedCostUsd:0};return{id,name:PROVIDERS[id]?.name||id,...m,budgetUsd:c.monthlyBudgetUsd??null,inputRate:c.inputPricePerMillion??null,outputRate:c.outputPricePerMillion??null};});
     return {currency:"USD",month,requests:this.usage.requests||0,inputTokens:this.usage.inputTokens||0,outputTokens:this.usage.outputTokens||0,providers:rows,notice:"Token counts are provider-reported where available. Estimated costs are calculated only when you enter your provider's current per-million-token rates. This is not the provider's invoice or live account balance."};
   }
-  async models(id){
-    const p=PROVIDERS[id],c=this.configs[id];
+  async models(id,overrides={}){
+    const p=PROVIDERS[id],c={...(this.configs[id]||{}),...overrides};
     if(!p||!c?.apiKey){const e=new Error("Save this provider's API key first, then discover models.");e.status=400;throw e;}
     let url,headers;
     if(p.kind==="gemini"){url=c.baseUrl.replace(/\\/+$/,"")+"/models?key="+encodeURIComponent(c.apiKey);headers={};}
