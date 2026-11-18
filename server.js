@@ -63,7 +63,7 @@ async function writeWorkspace(data) {
 }
 
 app.get("/health", async (_req, res) => { const binary = await runtime.binaryStatus(); res.status(binary.available ? 200 : 503).json({ ok: binary.available, app: "Allo", engine: "llama.cpp", runtime: binary, models: runtime.models.size, loaded: runtime.processes.size }); });
-app.get("/api/config", (_req, res) => res.json({
+app.get("/api/config", async (_req, res) => res.json({
   provider: "Allo Native GGUF Runtime",
   engine: "llama.cpp",
   endpoint: "/api",
