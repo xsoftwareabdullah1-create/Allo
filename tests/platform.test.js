@@ -91,3 +91,21 @@ test("runtime reports a clear missing llama-server diagnostic", () => {
   assert.ok(server.includes("runtime.binaryStatus()"));
   assert.ok(server.includes("binary.available ? 200 : 503"));
 });
+
+test("universal provider gateway includes major cloud providers and encrypted credential storage", () => {
+  const providers = read("providers.js");
+  const server = read("server.js");
+  for (const id of ["openai","anthropic","google","deepseek","groq","openrouter","together","fireworks","mistral","xai","cerebras","perplexity","custom"]) assert.ok(providers.includes(id), "missing provider " + id);
+  for (const token of ["aes-256-gcm","ALLO_ENCRYPTION_KEY","providers.enc"]) assert.ok(providers.includes(token));
+  for (const route of ['/api/providers",','/api/providers/:id",','/api/providers/:id/test",','/api/providers/chat",']) assert.ok(server.includes(route), "missing provider route " + route);
+  assert.ok(!providers.includes("localStorage"));
+});
+
+test("chat UI supports selecting a cloud provider without requiring a local model", () => {
+  const html = read("public/index.html");
+  const js = read("public/app.js");
+  assert.ok(html.includes('id="providerSelect"'));
+  assert.ok(html.includes('id="providerApiKey"'));
+  assert.ok(js.includes('api("providers/chat"'));
+  assert.ok(js.includes('!model&&!$("providerSelect").value'));
+});
