@@ -6,6 +6,7 @@ const PORT = Number(process.env.PORT || 3000);
 const OLLAMA_BASE_URL = (process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434").replace(/\/$/, "");
 const AUTH_USER = process.env.ALLO_USERNAME;
 const AUTH_PASS = process.env.ALLO_PASSWORD;
+const API_KEY = process.env.ALLO_API_KEY;
 if (process.env.NODE_ENV === "production" && (!AUTH_USER || !AUTH_PASS)) {
   throw new Error("Set ALLO_USERNAME and ALLO_PASSWORD before running Allo in production.");
 }
@@ -16,6 +17,11 @@ app.disable("x-powered-by");
 if (AUTH_USER && AUTH_PASS) {
   app.use((req, res, next) => {
     const header = req.headers.authorization || "";
+    if (API_KEY && header.startsWith("Bearer ")) {
+      const suppliedKey = Buffer.from(header.slice(7));
+      const expectedKey = Buffer.from(API_KEY);
+      if (suppliedKey.length === expectedKey.length && require("crypto").timingSafeEqual(suppliedKey, expectedKey)) return next();
+    }
     const supplied = header.startsWith("Basic ") ? Buffer.from(header.slice(6), "base64").toString("utf8") : "";
     const expected = AUTH_USER + ":" + AUTH_PASS;
     const a = Buffer.from(supplied);
