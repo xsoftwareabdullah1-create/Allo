@@ -140,3 +140,8 @@ See [architecture](docs/ARCHITECTURE.md), [API reference](docs/API.md), [securit
 
 ## License
 MIT for Allo's code. The bundled llama.cpp component retains its upstream license; see the [llama.cpp repository](https://github.com/ggml-org/llama.cpp) for details.
+
+## Connect cloud AI providers
+Allo also supports a multi-provider gateway for OpenAI, Claude, Gemini, DeepSeek, Groq, OpenRouter, Together AI, Fireworks, Mistral, xAI, Cerebras, Perplexity and custom OpenAI-compatible HTTPS APIs. Choose a provider in the chat model selector, then configure its API key and model in Settings.
+
+Before saving a provider key, set `ALLO_ENCRYPTION_KEY` on the server to a persistent random secret (generate one with `openssl rand -hex 32`). Allo encrypts provider credentials at rest using AES-256-GCM. Keep this secret backed up and unchanged; losing it makes existing provider keys unreadable. Cloud API usage may be paid and requires provider credentials. The built-in local GGUF runtime remains available without cloud keys.
