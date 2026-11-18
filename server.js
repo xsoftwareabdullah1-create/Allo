@@ -1,10 +1,11 @@
 const express = require("express");
 const path = require("path");
 const fs = require("node:fs/promises");
+const crypto = require("node:crypto");
+const { AlloRuntime } = require("./runtime");
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
-const OLLAMA_BASE_URL = (process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434").replace(/\/$/, "");
 const AUTH_USER = process.env.ALLO_USERNAME;
 const AUTH_PASS = process.env.ALLO_PASSWORD;
 const API_KEY = process.env.ALLO_API_KEY;
@@ -12,22 +13,29 @@ if (process.env.NODE_ENV === "production" && (!AUTH_USER || !AUTH_PASS)) {
   throw new Error("Set ALLO_USERNAME and ALLO_PASSWORD before running Allo in production.");
 }
 
-const ALLOWED = new Set(["GET /api/tags","GET /api/ps","GET /api/version","POST /api/chat","POST /api/generate","POST /api/pull","POST /api/show","POST /api/delete","POST /api/copy","POST /api/create","POST /api/embeddings","POST /api/embed","POST /api/push"]);
+const runtime = new AlloRuntime();
+const DATA_DIR = path.join(__dirname, "data");
+const STORE_FILE = path.join(DATA_DIR, "workspace.json");
 
 app.disable("x-powered-by");
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("X-Frame-Options", "DENY");
+  next();
+});
 if (AUTH_USER && AUTH_PASS) {
   app.use((req, res, next) => {
     const header = req.headers.authorization || "";
     if (API_KEY && header.startsWith("Bearer ")) {
-      const suppliedKey = Buffer.from(header.slice(7));
-      const expectedKey = Buffer.from(API_KEY);
-      if (suppliedKey.length === expectedKey.length && require("crypto").timingSafeEqual(suppliedKey, expectedKey)) return next();
+      const supplied = Buffer.from(header.slice(7));
+      const expected = Buffer.from(API_KEY);
+      if (supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected)) return next();
     }
-    const supplied = header.startsWith("Basic ") ? Buffer.from(header.slice(6), "base64").toString("utf8") : "";
-    const expected = AUTH_USER + ":" + AUTH_PASS;
-    const a = Buffer.from(supplied);
-    const b = Buffer.from(expected);
-    if (a.length !== b.length || !require("crypto").timingSafeEqual(a, b)) {
+    const basic = header.startsWith("Basic ") ? Buffer.from(header.slice(6), "base64").toString("utf8") : "";
+    const a = Buffer.from(basic);
+    const b = Buffer.from(AUTH_USER + ":" + AUTH_PASS);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
       res.setHeader("WWW-Authenticate", 'Basic realm="Allo", charset="UTF-8"');
       return res.status(401).send("Authentication required");
     }
@@ -37,11 +45,6 @@ if (AUTH_USER && AUTH_PASS) {
 app.use(express.json({ limit: "25mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/health", (_req, res) => res.json({ ok: true, app: "Allo", upstream: OLLAMA_BASE_URL }));
-app.get("/api/config", (_req, res) => res.json({ provider: "Ollama-compatible", endpoint: "/api", configured: true }));
-
-const DATA_DIR = path.join(__dirname, "data");
-const STORE_FILE = path.join(DATA_DIR, "workspace.json");
 async function readWorkspace() {
   try {
     const raw = await fs.readFile(STORE_FILE, "utf8");
@@ -54,10 +57,21 @@ async function readWorkspace() {
 }
 async function writeWorkspace(data) {
   await fs.mkdir(DATA_DIR, { recursive: true });
-  const temporary = STORE_FILE + "." + process.pid + "." + require("node:crypto").randomUUID() + ".tmp";
+  const temporary = STORE_FILE + "." + process.pid + "." + crypto.randomUUID() + ".tmp";
   await fs.writeFile(temporary, JSON.stringify(data), { mode: 0o600 });
   await fs.rename(temporary, STORE_FILE);
 }
+
+app.get("/health", (_req, res) => res.json({ ok: true, app: "Allo", engine: "llama.cpp", models: runtime.models.size, loaded: runtime.processes.size }));
+app.get("/api/config", (_req, res) => res.json({
+  provider: "Allo Native GGUF Runtime",
+  engine: "llama.cpp",
+  endpoint: "/api",
+  configured: true,
+  modelFormat: "GGUF",
+  loadedModels: runtime.processes.size,
+  maxLoadedModels: Number(process.env.ALLO_MAX_LOADED_MODELS || 1)
+}));
 app.get("/api/workspace", async (_req, res) => {
   try { res.json(await readWorkspace()); }
   catch (error) { res.status(500).json({ error: "Could not read workspace data", detail: error.message }); }
@@ -76,58 +90,140 @@ app.put("/api/workspace", async (req, res) => {
   }
 });
 
-
-app.all("/api/:endpoint", async (req, res) => {
-  const method = req.method.toUpperCase();
-  const endpoint = req.params.endpoint;
-  const key = method + " /api/" + endpoint;
-  if (!ALLOWED.has(key)) return res.status(404).json({ error: "Unsupported API endpoint" });
+function sendOllamaError(res, error) {
+  const status = error.status || 500;
+  if (!res.headersSent) res.status(status).json({ error: error.message || "Allo runtime error" });
+  else res.end();
+}
+function chatPayload(body) {
+  return {
+    model: body.model,
+    messages: body.messages || [{ role: "user", content: body.prompt || "" }],
+    temperature: body.options?.temperature,
+    max_tokens: body.options?.num_predict,
+    stream: body.stream !== false,
+    tools: body.tools
+  };
+}
+async function pipeOllamaChat(req, res, body) {
+  const upstream = await runtime.request(body.model, "/v1/chat/completions", chatPayload(body));
+  if (!upstream.ok) {
+    const detail = await upstream.text();
+    return res.status(upstream.status).json({ error: detail || "Inference failed" });
+  }
+  if (body.stream === false) {
+    const data = await upstream.json();
+    const choice = data.choices?.[0] || {};
+    return res.json({
+      model: body.model,
+      message: choice.message || { role: "assistant", content: "" },
+      done: true,
+      total_duration: data.usage?.total_tokens
+    });
+  }
+  res.status(200);
+  res.setHeader("Content-Type", "application/x-ndjson");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("X-Accel-Buffering", "no");
+  const reader = upstream.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let finished = false;
+  const emit = (payload) => { if (!res.destroyed) res.write(JSON.stringify(payload) + "\n"); };
+  req.on("close", () => { if (!finished) reader.cancel().catch(() => {}); });
   try {
-    const upstream = await fetch(OLLAMA_BASE_URL + "/api/" + endpoint, {
-      method,
-      headers: { "Content-Type": "application/json", "Accept": req.headers.accept || "application/json" },
-      body: method === "GET" ? undefined : JSON.stringify(req.body || {})
-    });
-    res.status(upstream.status);
-    const contentType = upstream.headers.get("content-type") || "application/json";
-    res.setHeader("Content-Type", contentType);
-    if (!upstream.body) return res.end();
-    if (contentType.includes("ndjson") || contentType.includes("stream")) {
-      const reader = upstream.body.getReader();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (!res.write(Buffer.from(value))) await new Promise(resolve => res.once("drain", resolve));
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
+      for (const line of lines) {
+        const raw = line.trim();
+        if (!raw.startsWith("data:")) continue;
+        const data = raw.slice(5).trim();
+        if (!data || data === "[DONE]") continue;
+        let chunk;
+        try { chunk = JSON.parse(data); } catch { continue; }
+        const delta = chunk.choices?.[0]?.delta;
+        if (delta?.content) emit({ model: body.model, message: { role: "assistant", content: delta.content }, done: false });
+        if (delta?.tool_calls) emit({ model: body.model, message: { role: "assistant", tool_calls: delta.tool_calls }, done: false });
       }
-      return res.end();
     }
-    const data = await upstream.text();
-    return res.send(data);
+    emit({ model: body.model, message: { role: "assistant", content: "" }, done: true });
+    finished = true;
+    res.end();
   } catch (error) {
-    return res.status(502).json({
-      error: "Could not reach the Ollama server.",
-      detail: error.cause?.code === "ECONNREFUSED" ? "Connection refused. Start Ollama and check OLLAMA_BASE_URL." : error.message,
-      endpoint: OLLAMA_BASE_URL
+    finished = true;
+    if (!res.destroyed) emit({ error: error.message, done: true });
+    if (!res.destroyed) res.end();
+  }
+}
+
+app.get("/api/tags", (_req, res) => res.json({ models: runtime.list() }));
+app.get("/api/ps", (_req, res) => res.json({ models: runtime.running() }));
+app.get("/api/version", (_req, res) => res.json({ version: "Allo Native Runtime 1.0", engine: "llama.cpp" }));
+
+app.post("/api/pull", async (req, res) => {
+  const reference = req.body?.model;
+  if (typeof reference !== "string" || !reference.trim()) return res.status(400).json({ error: "model must be a Hugging Face repository ID, optionally followed by :filename.gguf." });
+  res.status(200);
+  res.setHeader("Content-Type", "application/x-ndjson");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  try {
+    await runtime.download(reference, progress => {
+      if (!res.destroyed) res.write(JSON.stringify(progress) + "\n");
     });
+    if (!res.destroyed) res.end();
+  } catch (error) {
+    if (!res.destroyed) {
+      res.write(JSON.stringify({ error: error.message }) + "\n");
+      res.end();
+    }
   }
 });
 
-
-const OPENAI_COMPATIBLE = new Set(["GET /v1/models","POST /v1/chat/completions","POST /v1/completions","POST /v1/embeddings"]);
-app.all("/v1/*", async (req, res) => {
-  const method = req.method.toUpperCase();
-  const endpoint = req.path.slice("/v1/".length);
-  const key = method + " /v1/" + endpoint;
-  if (!OPENAI_COMPATIBLE.has(key)) return res.status(404).json({ error: "Unsupported OpenAI-compatible endpoint" });
+app.post("/api/chat", async (req, res) => {
+  if (!req.body?.model) return res.status(400).json({ error: "model is required" });
+  try { await pipeOllamaChat(req, res, req.body); }
+  catch (error) { sendOllamaError(res, error); }
+});
+app.post("/api/generate", async (req, res) => {
+  if (req.body?.keep_alive === 0 && req.body?.model) {
+    await runtime.stop(req.body.model);
+    return res.json({ done: true, stopped: req.body.model });
+  }
   try {
-    const upstream = await fetch(OLLAMA_BASE_URL + "/v1/" + endpoint, {
-      method,
-      headers: { "Content-Type": "application/json", "Accept": req.headers.accept || "application/json" },
-      body: method === "GET" ? undefined : JSON.stringify(req.body || {})
-    });
+    const body = { ...req.body, messages: [{ role: "user", content: req.body.prompt || "" }] };
+    await pipeOllamaChat(req, res, body);
+  } catch (error) { sendOllamaError(res, error); }
+});
+app.post("/api/show", (req, res) => {
+  try {
+    const model = runtime.get(req.body?.model);
+    res.json({ modelfile: "GGUF model downloaded from Hugging Face", parameters: "", template: "", details: { format: "gguf", family: model.family, parameter_size: "unknown", quantization_level: "unknown" }, model_info: model });
+  } catch (error) { sendOllamaError(res, error); }
+});
+app.post("/api/delete", async (req, res) => {
+  try { await runtime.remove(req.body?.model); res.json({ ok: true }); }
+  catch (error) { sendOllamaError(res, error); }
+});
+app.post("/api/copy", async (req, res) => {
+  try { await runtime.copy(req.body?.source, req.body?.destination); res.json({ ok: true }); }
+  catch (error) { sendOllamaError(res, error); }
+});
+app.post("/api/create", (_req, res) => res.status(501).json({ error: "Custom Modelfiles are not supported by the GGUF runtime yet. Download a GGUF model from Hugging Face instead." }));
+app.post("/api/push", (_req, res) => res.status(501).json({ error: "Registry publishing is not available yet. Allo currently downloads GGUF files from Hugging Face." }));
+app.post("/api/embed", (_req, res) => res.status(501).json({ error: "Embedding model mode is not enabled in this first native runtime release. It is on the runtime roadmap." }));
+app.post("/api/embeddings", (_req, res) => res.status(501).json({ error: "Embedding model mode is not enabled in this first native runtime release. It is on the runtime roadmap." }));
+
+app.get("/v1/models", (_req, res) => res.json({ object: "list", data: runtime.list().map(m => ({ id: m.name, object: "model", created: Math.floor(Date.parse(m.modified_at) / 1000), owned_by: "allo" })) }));
+app.post("/v1/chat/completions", async (req, res) => {
+  try {
+    const upstream = await runtime.request(req.body?.model, "/v1/chat/completions", req.body);
     res.status(upstream.status);
-    const contentType = upstream.headers.get("content-type") || "application/json";
-    res.setHeader("Content-Type", contentType);
+    const type = upstream.headers.get("content-type") || "application/json";
+    res.setHeader("Content-Type", type);
     if (!upstream.body) return res.end();
     const reader = upstream.body.getReader();
     while (true) {
@@ -135,11 +231,32 @@ app.all("/v1/*", async (req, res) => {
       if (done) break;
       if (!res.write(Buffer.from(value))) await new Promise(resolve => res.once("drain", resolve));
     }
-    return res.end();
-  } catch (error) {
-    return res.status(502).json({ error: "Could not reach the OpenAI-compatible Ollama endpoint.", detail: error.message });
-  }
+    res.end();
+  } catch (error) { sendOllamaError(res, error); }
 });
+app.post("/v1/completions", async (req, res) => {
+  try {
+    const upstream = await runtime.request(req.body?.model, "/completion", req.body);
+    res.status(upstream.status);
+    res.setHeader("Content-Type", upstream.headers.get("content-type") || "application/json");
+    res.send(await upstream.text());
+  } catch (error) { sendOllamaError(res, error); }
+});
+app.post("/v1/embeddings", (_req, res) => res.status(501).json({ error: "Embedding model support is planned for a later native runtime release." }));
 
 app.get("*", (_req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
-app.listen(PORT, "0.0.0.0", () => console.log(`Allo running on http://localhost:${PORT} → ${OLLAMA_BASE_URL}`));
+
+async function start() {
+  await runtime.init();
+  const server = app.listen(PORT, "0.0.0.0", () => console.log("Allo native runtime listening on port " + PORT));
+  const shutdown = async () => {
+    server.close();
+    await runtime.close();
+    process.exit(0);
+  };
+  process.once("SIGTERM", shutdown);
+  process.once("SIGINT", shutdown);
+}
+start().catch(error => { console.error("Allo startup failed:", error); process.exit(1); });
+
+module.exports = { app };
