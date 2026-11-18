@@ -71,20 +71,61 @@ $("removeProvider").onclick=async()=>{const id=$("providerConfigSelect").value;i
 $("providerSelect").onchange=()=>{const cloud=Boolean($("providerSelect").value);$("modelSelect").disabled=cloud||!state.models.length;$("promptInput").disabled=!cloud&&!state.models.length;$("sendBtn").disabled=!cloud&&!state.models.length;$("promptInput").placeholder=cloud?"Ask "+$("providerSelect").selectedOptions[0].textContent+"…":"Ask anything…";};
 async function loadSettings(){try{const d=await(await fetch("/api/config")).json();$("endpointValue").textContent=d.provider+" · "+d.endpoint;$("healthValue").textContent="Online";}catch(e){$("endpointValue").textContent="Unavailable";$("healthValue").textContent="Offline";}}
 
-const catalogModels = [
- {repo:"Qwen/Qwen2.5-0.5B-Instruct-GGUF",family:"Qwen 2.5 Instruct",task:"small",size:"0.5B",description:"Very compact multilingual assistant for low-memory devices."},
- {repo:"Qwen/Qwen2.5-1.5B-Instruct-GGUF",family:"Qwen 2.5 Instruct",task:"chat",size:"1.5B",description:"Balanced instruction model for everyday chat."},
- {repo:"Qwen/Qwen2.5-3B-Instruct-GGUF",family:"Qwen 2.5 Instruct",task:"chat",size:"3B",description:"General-purpose multilingual assistant."},
- {repo:"Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF",family:"Qwen 2.5 Coder",task:"code",size:"1.5B",description:"Compact coding and programming assistant."},
- {repo:"Qwen/Qwen2.5-Coder-3B-Instruct-GGUF",family:"Qwen 2.5 Coder",task:"code",size:"3B",description:"Coding assistant for generation and explanation."},
- {repo:"bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF",family:"DeepSeek R1 Distill",task:"chat",size:"1.5B",description:"Small reasoning-focused model."},
- {repo:"bartowski/DeepSeek-R1-Distill-Qwen-7B-GGUF",family:"DeepSeek R1 Distill",task:"chat",size:"7B",description:"Larger reasoning model; requires more memory."},
- {repo:"microsoft/Phi-3.5-mini-instruct-GGUF",family:"Phi 3.5 Mini",task:"chat",size:"3.8B",description:"Compact instruction-following model."},
- {repo:"bartowski/Mistral-7B-Instruct-v0.3-GGUF",family:"Mistral 7B",task:"chat",size:"7B",description:"General-purpose instruction model."},
- {repo:"lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF",family:"Llama 3.1",task:"chat",size:"8B",description:"Larger general-purpose assistant; memory intensive."}
+const featuredCatalog = [
+ {repo:"Qwen/Qwen2.5-0.5B-Instruct-GGUF",family:"Qwen 2.5 Instruct",task:"small",size:"0.5B",description:"Compact multilingual assistant for low-memory devices."},
+ {repo:"Qwen/Qwen2.5-Coder-0.5B-Instruct-GGUF",family:"Qwen 2.5 Coder",task:"code",size:"0.5B",description:"Small coding model."},
+ {repo:"bartowski/SmolLM2-360M-Instruct-GGUF",family:"SmolLM2",task:"small",size:"360M",description:"Very small instruction model."},
+ {repo:"bartowski/TinyLlama-1.1B-Chat-v1.0-GGUF",family:"TinyLlama",task:"small",size:"1.1B",description:"Compact chat model."}
 ];
-function renderCatalog(){const root=$("catalogGrid");if(!root)return;const q=($("catalogSearch").value||"").toLowerCase();const cat=$("catalogFilter").value;const installed=state.models.map(m=>m.name);const items=catalogModels.filter(m=>(cat==="all"||m.task===cat)&&[m.repo,m.family,m.description].join(" ").toLowerCase().includes(q));root.innerHTML="";if(!items.length){root.innerHTML='<div class="loading-card">No matching models in this featured catalogue.</div>';return;}items.forEach(m=>{const isInstalled=installed.some(name=>name.startsWith(m.repo+":"));const card=document.createElement("article");card.className="catalog-card";card.innerHTML='<div class="catalog-top"><span class="model-symbol">◈</span><span class="catalog-size">'+escapeHtml(m.size)+'</span></div><h3>'+escapeHtml(m.family)+'</h3><div class="model-meta">'+escapeHtml(m.repo)+' · '+escapeHtml(m.task)+'</div><p>'+escapeHtml(m.description)+'</p><button class="'+(isInstalled?"secondary-button":"primary-button")+'">'+(isInstalled?"Installed":"Download GGUF")+'</button>';card.querySelector("button").onclick=()=>{if(isInstalled){toast("Already installed: "+m.repo);return;}$("pullName").value=m.repo;showView("models");pullModel();};root.append(card);});}
-$("catalogSearch").addEventListener("input",renderCatalog);$("catalogFilter").addEventListener("change",renderCatalog);
+let catalogRequest = 0;
+async function renderCatalog(){
+ const root=$("catalogGrid");if(!root)return;
+ const q=($("catalogSearch").value||"").trim();
+ const cat=$("catalogFilter").value;
+ const request=++catalogRequest;
+ root.innerHTML='<div class="loading-card">Searching live Hugging Face GGUF models…</div>';
+ try {
+  const response=await api("catalog"+(q?"?q="+encodeURIComponent(q):""));
+  const data=await response.json();
+  if(request!==catalogRequest)return;
+  const installed=state.models.map(m=>m.name);
+  let items=(data.models||[]);
+  if(cat==="small")items=items.filter(m=>/0\.5b|1b|1\.1b|1\.5b|360m|135m/i.test(m.repo));
+  if(cat==="code")items=items.filter(m=>/coder|code/i.test(m.repo+" "+m.tags.join(" ")));
+  if(cat==="vision")items=items.filter(m=>/vision|vl|llava|moondream/i.test(m.repo+" "+m.tags.join(" ")));
+  if(!items.length){
+   root.innerHTML='<div class="loading-card">No GGUF repositories found. Try another search term.</div>';
+   return;
+  }
+  root.innerHTML="";
+  items.forEach(m=>{
+   const isInstalled=installed.some(name=>name.startsWith(m.repo+":"));
+   const card=document.createElement("article");card.className="catalog-card";
+   const top=document.createElement("div");top.className="catalog-top";
+   const symbol=document.createElement("span");symbol.className="model-symbol";symbol.textContent="◈";
+   const size=document.createElement("span");size.className="catalog-size";size.textContent=(m.tags||[]).find(t=>/\d+(\.\d+)?[BM]$/i.test(t))||"GGUF";
+   top.append(symbol,size);
+   const title=document.createElement("h3");title.textContent=m.name||m.repo;
+   const meta=document.createElement("div");meta.className="model-meta";meta.textContent=m.repo;
+   const stats=document.createElement("div");stats.className="model-meta";stats.textContent=Number(m.downloads||0).toLocaleString()+" downloads · "+Number(m.likes||0).toLocaleString()+" likes";
+   const desc=document.createElement("p");desc.textContent=(m.tags||[]).filter(t=>!t.startsWith("license:")).slice(0,5).join(" · ")||"Hugging Face GGUF model repository";
+   const button=document.createElement("button");button.className=isInstalled?"secondary-button":"primary-button";button.textContent=isInstalled?"Installed":"Download model";
+   button.disabled=isInstalled;
+   button.onclick=()=>{$("pullName").value=m.repo;showView("models");pullModel();};
+   card.append(top,title,meta,stats,desc,button);root.append(card);
+  });
+ } catch(error) {
+  if(request!==catalogRequest)return;
+  const installed=state.models.map(m=>m.name);
+  const fallback=featuredCatalog.filter(m=>(cat==="all"||cat===m.task||cat==="small"&&m.task==="small")&&(!q||m.repo.toLowerCase().includes(q.toLowerCase())||m.family.toLowerCase().includes(q.toLowerCase())));
+  root.innerHTML="";
+  const notice=document.createElement("div");notice.className="loading-card";notice.textContent="Live catalogue unavailable: "+error.message+" · Showing featured models.";root.append(notice);
+  fallback.forEach(m=>{const card=document.createElement("article");card.className="catalog-card";card.innerHTML='<h3>'+escapeHtml(m.family)+'</h3><div class="model-meta">'+escapeHtml(m.repo)+'</div><p>'+escapeHtml(m.description)+'</p><button class="primary-button">Download model</button>';card.querySelector("button").onclick=()=>{$("pullName").value=m.repo;showView("models");pullModel();};root.append(card);});
+ }
+}
+let catalogSearchTimer;
+$("catalogSearch").addEventListener("input",()=>{clearTimeout(catalogSearchTimer);catalogSearchTimer=setTimeout(renderCatalog,350);});
+$("catalogFilter").addEventListener("change",renderCatalog);
 function populateCompare(){const options=state.models.map(m=>'<option value="'+escapeHtml(m.name)+'">'+escapeHtml(m.name)+'</option>').join("");$("compareA").innerHTML=options||'<option value="">No installed models</option>';$("compareB").innerHTML=options||'<option value="">No installed models</option>';if(state.models.length>1)$("compareB").selectedIndex=1;}
 async function runOne(model,prompt){const response=await api("chat",{method:"POST",body:JSON.stringify({model,messages:[{role:"user",content:prompt}],stream:true})});const reader=response.body.getReader(),decoder=new TextDecoder();let buffer="",result="";while(true){const {done,value}=await reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});const lines=buffer.split("\n");buffer=lines.pop();for(const line of lines){if(!line.trim())continue;const d=JSON.parse(line);result+=d.message?.content||"";}}return result;}
 $("compareRun").onclick=async()=>{const a=$("compareA").value,b=$("compareB").value,p=$("comparePrompt").value.trim();if(!a||!b||!p)return toast("Choose two models and enter a prompt.");$("compareRun").disabled=true;$("compareResults").innerHTML='<div class="compare-empty">Generating both responses…</div>';try{const ra=await runOne(a,p);const rb=await runOne(b,p);$("compareResults").innerHTML="";[[a,ra],[b,rb]].forEach(([name,answer])=>{const card=document.createElement("article");card.className="compare-card";const h=document.createElement("h3");h.textContent=name;const body=document.createElement("div");body.className="compare-answer";body.textContent=answer;card.append(h,body);$("compareResults").append(card);});}catch(e){$("compareResults").textContent=e.message;}finally{$("compareRun").disabled=false;}};
