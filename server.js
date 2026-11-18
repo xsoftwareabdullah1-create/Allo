@@ -90,7 +90,7 @@ app.put("/api/workspace", async (req, res) => {
   }
 });
 
-function sendOllamaError(res, error) {
+function sendRuntimeError(res, error) {
   const status = error.status || 500;
   if (!res.headersSent) res.status(status).json({ error: error.message || "Allo runtime error" });
   else res.end();
@@ -105,7 +105,7 @@ function chatPayload(body) {
     tools: body.tools
   };
 }
-async function pipeOllamaChat(req, res, body) {
+async function pipeRuntimeChat(req, res, body) {
   const upstream = await runtime.request(body.model, "/v1/chat/completions", chatPayload(body));
   if (!upstream.ok) {
     const detail = await upstream.text();
@@ -185,8 +185,8 @@ app.post("/api/pull", async (req, res) => {
 
 app.post("/api/chat", async (req, res) => {
   if (!req.body?.model) return res.status(400).json({ error: "model is required" });
-  try { await pipeOllamaChat(req, res, req.body); }
-  catch (error) { sendOllamaError(res, error); }
+  try { await pipeRuntimeChat(req, res, req.body); }
+  catch (error) { sendRuntimeError(res, error); }
 });
 app.post("/api/generate", async (req, res) => {
   if (req.body?.keep_alive === 0 && req.body?.model) {
@@ -195,22 +195,22 @@ app.post("/api/generate", async (req, res) => {
   }
   try {
     const body = { ...req.body, messages: [{ role: "user", content: req.body.prompt || "" }] };
-    await pipeOllamaChat(req, res, body);
-  } catch (error) { sendOllamaError(res, error); }
+    await pipeRuntimeChat(req, res, body);
+  } catch (error) { sendRuntimeError(res, error); }
 });
 app.post("/api/show", (req, res) => {
   try {
     const model = runtime.get(req.body?.model);
     res.json({ modelfile: "GGUF model downloaded from Hugging Face", parameters: "", template: "", details: { format: "gguf", family: model.family, parameter_size: "unknown", quantization_level: "unknown" }, model_info: model });
-  } catch (error) { sendOllamaError(res, error); }
+  } catch (error) { sendRuntimeError(res, error); }
 });
 app.post("/api/delete", async (req, res) => {
   try { await runtime.remove(req.body?.model); res.json({ ok: true }); }
-  catch (error) { sendOllamaError(res, error); }
+  catch (error) { sendRuntimeError(res, error); }
 });
 app.post("/api/copy", async (req, res) => {
   try { await runtime.copy(req.body?.source, req.body?.destination); res.json({ ok: true }); }
-  catch (error) { sendOllamaError(res, error); }
+  catch (error) { sendRuntimeError(res, error); }
 });
 app.post("/api/create", (_req, res) => res.status(501).json({ error: "Custom Modelfiles are not supported by the GGUF runtime yet. Download a GGUF model from Hugging Face instead." }));
 app.post("/api/push", (_req, res) => res.status(501).json({ error: "Registry publishing is not available yet. Allo currently downloads GGUF files from Hugging Face." }));
@@ -232,7 +232,7 @@ app.post("/v1/chat/completions", async (req, res) => {
       if (!res.write(Buffer.from(value))) await new Promise(resolve => res.once("drain", resolve));
     }
     res.end();
-  } catch (error) { sendOllamaError(res, error); }
+  } catch (error) { sendRuntimeError(res, error); }
 });
 app.post("/v1/completions", async (req, res) => {
   try {
@@ -240,7 +240,7 @@ app.post("/v1/completions", async (req, res) => {
     res.status(upstream.status);
     res.setHeader("Content-Type", upstream.headers.get("content-type") || "application/json");
     res.send(await upstream.text());
-  } catch (error) { sendOllamaError(res, error); }
+  } catch (error) { sendRuntimeError(res, error); }
 });
 app.post("/v1/embeddings", (_req, res) => res.status(501).json({ error: "Embedding model support is planned for a later native runtime release." }));
 
