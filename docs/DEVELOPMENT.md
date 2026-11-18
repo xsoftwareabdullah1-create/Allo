@@ -1,42 +1,37 @@
 # Development
 
 ## Requirements
-
 - Node.js 20 or newer
 - npm
-- An Ollama server for end-to-end inference testing
+- A local `llama-server` executable for inference testing; Docker builds and bundles it automatically.
 
 ## Install
-
 ```bash
 npm install
 cp .env.example .env
-npm run dev
+ALLO_LLAMACPP_BIN=/path/to/llama-server npm run dev
 ```
 
-Set `OLLAMA_BASE_URL` to the reachable Ollama URL. In a local non-production development environment, Basic authentication is optional. Never use that configuration on a public host.
+Allo stores downloaded GGUF files under `data/models`. The model registry and workspace are stored under `data/`. No Ollama server or external inference API is required.
 
-## Validation
-
+## Test
 ```bash
-node --check server.js
-node --check public/app.js
 npm test
+node --check server.js
+node --check runtime.js
+node --check public/app.js
 ```
 
-## Project layout
-
-- `server.js` — Express server, authentication and API proxy.
-- `public/index.html` — application views and navigation.
-- `public/styles.css` — responsive interface.
-- `public/app.js` — chat, model management and workspace modules.
-- `tests/` — Node built-in test suite.
-- `docs/` — architecture and API documentation.
+## Runtime notes
+- Public GGUF repositories are resolved through the Hugging Face model tree API.
+- The first Docker build compiles llama.cpp from source.
+- CPU inference is the default; GPU support needs a matching build and host configuration.
+- Use small quantized models for development machines with limited memory.
 
 ## Contribution rules
-
-- Keep the Ollama proxy allowlist explicit.
+- Keep model repository and file-path validation strict.
+- Never accept arbitrary download URLs from browser input.
+- Preserve download size limits and atomic registry writes.
+- Handle process startup failures, request cancellation and streaming errors.
 - Do not commit API keys, passwords, model weights or local environment files.
-- Preserve streaming responses; do not buffer long model output unnecessarily.
-- Add tests for new API routes and user-facing modules.
-- Keep the interface usable on narrow mobile screens.
+- Add tests for new runtime behavior and document unsupported model capabilities.
