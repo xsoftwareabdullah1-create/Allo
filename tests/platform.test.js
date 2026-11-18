@@ -36,3 +36,12 @@ test("frontend wires major model and developer tools", () => {
     assert.ok(js.includes(feature), "missing frontend feature " + feature);
   }
 });
+
+test("workspace persistence endpoints are authenticated and validated", () => {
+  const server = read("server.js");
+  assert.match(server, /app\.get\("\/api\/workspace"/);
+  assert.match(server, /app\.put\("\/api\/workspace"/);
+  assert.match(server, /chats\.length > 500/);
+  assert.match(server, /prompts\.length > 500/);
+  assert.match(server, /fs\.rename\(temporary, STORE_FILE\)/);
+});
