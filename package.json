@@ -1,8 +1,8 @@
 {
   "name": "allo-ai",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "A self-hosted AI workspace for Ollama-compatible model servers",
+  "description": "A self-hosted AI platform with its own GGUF model manager and bundled llama.cpp runtime",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
