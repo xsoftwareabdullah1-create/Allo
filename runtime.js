@@ -82,7 +82,7 @@ class AlloRuntime {
     }
     const filename = fileParts.join(":");
     if (filename && (!filename.toLowerCase().endsWith(".gguf") || filename.includes("\\") || filename.split("/").some(part => !part || part === "." || part === ".."))) {
-      throw new Error("The optional model filename must be a single .gguf file name.");
+      throw new Error("The optional model filename must be a safe relative .gguf file path.");
     }
     return { repo, filename };
   }
