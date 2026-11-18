@@ -1,50 +1,25 @@
-# Provider Architecture
+# Inference engine architecture
 
-## Current implementation
+## Current runtime
+Allo bundles llama.cpp's `llama-server` executable in its Docker image. The runtime manager downloads GGUF files, maintains a local registry, starts inference processes on demand and adapts responses for the Allo UI/API. There is no Ollama server dependency.
 
-Allo currently targets an Ollama-compatible server. The server uses one configured `OLLAMA_BASE_URL` and proxies a strict allowlist of native `/api/*` and OpenAI-compatible `/v1/*` routes.
+## Why llama.cpp
+GGUF is a practical format for local quantized inference across CPU and supported accelerator backends. Building llama.cpp into the Allo image provides a local inference executable without requiring users to install or operate an Ollama daemon.
 
-The browser talks to Allo, not directly to Ollama. This keeps the upstream address in server configuration and provides one place for authentication and request policy.
+Allo does not claim that its current code independently implements transformer kernels. The project owns the orchestration and application layer; llama.cpp supplies the low-level inference engine under its upstream license.
 
-## Why an adapter boundary matters
-
-Supporting additional inference providers should not spread provider-specific URL and payload assumptions across the browser UI. A future provider layer should expose a capability-oriented contract:
-
-- list models
-- inspect model capabilities
-- create streaming and non-streaming chat completions
-- create text completions where supported
-- create embeddings where supported
-- manage model weights only when the provider supports those operations
-
-Unsupported capabilities must be explicit. A provider that cannot manage local weights should not display Ollama-only actions.
-
-## Proposed adapter contract
-
-This is a design target, not an implemented API:
-
-```js
-{
-  id: "ollama",
-  capabilities: { chat: true, streaming: true, embeddings: true, modelManagement: true },
-  listModels(),
-  chat(request, { signal }),
-  embeddings(request),
-  inspectModel(name)
-}
-```
+## Planned engine work
+- GPU-specific build profiles and hardware detection.
+- Embedding model process mode.
+- Vision models with explicit multimodal projector support.
+- Runtime health, memory estimates and process metrics.
+- Download resume, checksums and model metadata validation.
+- Additional backends behind an explicit capability interface.
 
 ## Security requirements
-
-- Provider credentials belong on the server and must never be returned to browser configuration endpoints.
-- Provider base URLs must be administrator-controlled and validated to avoid SSRF.
-- Never forward browser-supplied arbitrary URLs.
-- Apply request size limits, timeouts, cancellation and normalized errors.
-- Clearly identify remote destinations; never silently transmit prompts or files to a remote provider.
-
-## Migration approach
-
-1. Keep current Ollama behavior stable behind its adapter.
-2. Define capability tests before adding a second provider.
-3. Add one provider at a time with mocked HTTP integration tests.
-4. Document data flow, credential storage and unsupported operations for each provider.
+- Fetch model files only from the Hugging Face host; do not accept arbitrary download URLs.
+- Validate repository IDs and file paths before writing to disk.
+- Bound model download size and persist partial downloads separately.
+- Never expose local runtime ports to the public network.
+- Keep API credentials server-side.
+- Treat model files as untrusted input and keep runtime processes isolated.
