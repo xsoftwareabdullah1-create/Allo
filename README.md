@@ -21,7 +21,8 @@ The inference executable is built into the Allo Docker image from the open-sourc
 - Download GGUF files directly from Hugging Face repositories.
 - Automatic selection of a Q4_K_M or Q4_0 file when available.
 - Native llama.cpp inference process management.
-- Streaming chat and local model selection.
+- Streaming chat, Markdown-formatted answers and local model selection.
+- First-run onboarding that downloads a starter AI model with one click.
 - Model inspection, deletion and local file copy.
 - OpenAI-compatible chat and model-list API.
 - Persistent chat and prompt workspace.
@@ -55,7 +56,7 @@ Build and start:
 docker compose up -d --build
 ```
 
-Open [http://localhost:3000](http://localhost:3000), sign in, and open **Models**. Enter a Hugging Face repository ID such as:
+Open [http://localhost:3000](http://localhost:3000) and sign in. On first launch, choose **Download starter model**. Allo downloads a small Qwen 2.5 0.5B GGUF model (roughly 430–490 MB depending on quantization) from Hugging Face; after the download completes, select it in Chat and send your first message. You can also open **Models** to install a larger model. The starter model is intentionally small and is useful for trying the runtime, not a top-tier reasoning model. The model weights are not bundled in the Git repository because they are large files.
 
 ```text
 Qwen/Qwen2.5-0.5B-Instruct-GGUF
@@ -121,7 +122,7 @@ Allo has no Ollama dependency. llama.cpp is the bundled inference engine; Allo o
 - The bundled Docker runtime is CPU-first; GPU acceleration is not configured in this initial build.
 - GGUF models are supported; other model formats are not.
 - One model is loaded by default. Increase `ALLO_MAX_LOADED_MODELS` only if the host has sufficient RAM.
-- The initial runtime supports chat and OpenAI-compatible chat completions. Embeddings, vision, model publishing and custom Modelfiles are not implemented yet.
+- The currently implemented inference path supports text chat and OpenAI-compatible chat completions. Embeddings, vision, model publishing and custom Modelfiles are not implemented yet.
 - Public/private gated Hugging Face repository authentication is not implemented.
 - Authentication is single-user Basic authentication, not multi-user accounts.
 - The project does not claim to have authored the underlying inference engine from scratch; llama.cpp is included under its upstream license.
