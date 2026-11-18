@@ -5,3 +5,7 @@ npm-debug.log*
 
 data/*.json
 data/*.tmp
+
+# Local model weights and incomplete downloads
+data/models/
+*.part
