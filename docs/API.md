@@ -1,67 +1,47 @@
 # Allo API reference
 
-All requests are made to the Allo server. In production, use Basic authentication for the web interface. SDK clients can use `Authorization: Bearer YOUR_ALLO_API_KEY` when `ALLO_API_KEY` is configured.
+All endpoints are served by Allo. Production web access uses Basic authentication; SDK clients may use `Authorization: Bearer YOUR_ALLO_API_KEY` when configured.
 
-## Native Ollama proxy
-
+## Native Allo endpoints
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/api/tags` | List installed models |
-| GET | `/api/ps` | List loaded models |
-| GET | `/api/version` | Runtime version |
-| POST | `/api/chat` | Chat completion |
-| POST | `/api/generate` | Text generation |
-| POST | `/api/pull` | Download a model |
-| POST | `/api/push` | Publish a model to a registry |
-| POST | `/api/push` | Push a model to a registry |
-| POST | `/api/show` | Model metadata and template |
-| POST | `/api/copy` | Copy a model tag |
-| POST | `/api/create` | Create a model from a Modelfile |
-| POST | `/api/delete` | Delete a model |
-| POST | `/api/embed` | Generate embeddings |
-| POST | `/api/embed` | Generate embeddings |
-| POST | `/api/embeddings` | Legacy embeddings endpoint |
+| GET | `/health` | Allo and runtime health |
+| GET | `/api/config` | Runtime configuration summary |
+| GET | `/api/tags` | List locally downloaded GGUF models |
+| GET | `/api/ps` | List currently loaded inference processes |
+| GET | `/api/version` | Allo runtime version |
+| POST | `/api/pull` | Download a GGUF model from Hugging Face |
+| POST | `/api/chat` | Streaming or non-streaming chat |
+| POST | `/api/generate` | Prompt generation or stop a loaded model |
+| POST | `/api/show` | Inspect local model metadata |
+| POST | `/api/delete` | Delete a local model |
+| POST | `/api/copy` | Copy a local model file |
+| GET | `/api/workspace` | Read saved chats and prompts |
+| PUT | `/api/workspace` | Save chats and prompts |
 
-## Allo workspace API
-
-These authenticated endpoints are implemented by Allo itself, not forwarded to Ollama:
-
-| Method | Path | Purpose |
-|---|---|---|
-| GET | `/api/workspace` | Read saved chats and prompt templates |
-| PUT | `/api/workspace` | Replace saved chats and prompt templates |
-
-The request body for `PUT` must contain `chats` and `prompts` arrays, with at most 500 entries in each. The server persists the data in `data/workspace.json`; Docker Compose mounts the `allo_data` volume at that location.
-
-## OpenAI-compatible proxy
-
-| Method | Path |
-|---|---|
-| GET | `/v1/models` |
-| POST | `/v1/chat/completions` |
-| POST | `/v1/completions` |
-| POST | `/v1/embeddings` |
-
-Example using an OpenAI-compatible SDK:
-
-```js
-import OpenAI from "openai";
-
-const client = new OpenAI({
-  baseURL: "https://YOUR_ALLO_HOST/v1",
-  apiKey: process.env.ALLO_API_KEY
-});
-
-const result = await client.chat.completions.create({
-  model: "llama3.2:1b",
-  messages: [{ role: "user", content: "Hello" }]
-});
-
-console.log(result.choices[0].message.content);
+## Download request
+```json
+{ "model": "Qwen/Qwen2.5-0.5B-Instruct-GGUF", "stream": true }
 ```
 
-## Notes
+Choose a specific file:
+```json
+{ "model": "owner/repository:folder/model.Q4_K_M.gguf", "stream": true }
+```
 
-Allo forwards request bodies to Ollama. Model names must exist on the connected Ollama server. Streaming is supported by the proxy; client SDKs should consume streamed responses when `stream: true` is requested.
+The response is newline-delimited JSON progress events with `status`, `completed` and `total` fields.
 
-For full request and response schemas, see the [Ollama API documentation](https://docs.ollama.com/api).
+## OpenAI-compatible endpoints
+| Method | Path | Status |
+|---|---|---|
+| GET | `/v1/models` | Implemented |
+| POST | `/v1/chat/completions` | Implemented |
+| POST | `/v1/completions` | Experimental |
+| POST | `/v1/embeddings` | Not yet implemented (501) |
+
+Use the exact local model ID returned by `GET /v1/models`.
+
+## Runtime notes
+Allo downloads GGUF model files from Hugging Face and starts a local `llama-server` process on demand. It does not proxy requests to an Ollama server. The Docker image builds the inference executable from llama.cpp source.
+
+The initial release is CPU-first and chat-focused. Embeddings, vision, gated Hugging Face authentication and model publishing are planned but not implemented.
