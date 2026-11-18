@@ -15,7 +15,7 @@ Allo gives you one web interface to chat with local models, discover and manage 
 | Explore | Searchable featured model catalogue with one-click pull |
 | Running | Inspect models currently loaded by the Ollama server |
 | Compare | Run the same prompt against two installed models side by side |
-| Prompt library | Save, reuse and delete prompt templates in browser storage |
+| Prompt library | Save, reuse and delete prompt templates with server-side persistence |
 | Embeddings | Generate and inspect vectors with installed embedding models |
 | API playground | Send requests to selected native Ollama endpoints |
 | API compatibility | Proxy OpenAI-compatible models, chat completions, completions and embeddings |
@@ -111,7 +111,7 @@ See [development guide](docs/DEVELOPMENT.md) and [architecture](docs/ARCHITECTUR
 ## Current limitations
 
 - Single-user web login; no multi-user roles or team workspaces yet.
-- Chats and prompt templates are stored in browser local storage, not synced across devices.
+- Chat history and prompt templates sync to the Allo server's JSON workspace store; this is a single-user store, not a multi-tenant database.
 - The featured model catalogue is a curated list, not a live mirror of the full Ollama library.
 - Model execution requires an Ollama server and compatible hardware.
 - Public deployment requires HTTPS and secure secret management.
