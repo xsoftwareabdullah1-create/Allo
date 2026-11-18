@@ -1,6 +1,6 @@
 # Allo API reference
 
-All requests are made to the Allo server. When authentication is enabled, use Basic authentication for the web interface or a Bearer token for SDK access when `ALLO_API_KEY` is configured.
+All requests are made to the Allo server. In production, use Basic authentication for the web interface. SDK clients can use `Authorization: Bearer YOUR_ALLO_API_KEY` when `ALLO_API_KEY` is configured.
 
 ## Native Ollama proxy
 
@@ -12,11 +12,13 @@ All requests are made to the Allo server. When authentication is enabled, use Ba
 | POST | `/api/chat` | Chat completion |
 | POST | `/api/generate` | Text generation |
 | POST | `/api/pull` | Download a model |
+| POST | `/api/push` | Publish a model to a registry |
 | POST | `/api/push` | Push a model to a registry |
 | POST | `/api/show` | Model metadata and template |
 | POST | `/api/copy` | Copy a model tag |
 | POST | `/api/create` | Create a model from a Modelfile |
 | POST | `/api/delete` | Delete a model |
+| POST | `/api/embed` | Generate embeddings |
 | POST | `/api/embed` | Generate embeddings |
 | POST | `/api/embeddings` | Legacy embeddings endpoint |
 
