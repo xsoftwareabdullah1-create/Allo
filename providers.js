@@ -77,7 +77,7 @@ class ProviderHub {
     const r=await fetch(url,{headers,signal:AbortSignal.timeout(30000)}),d=await r.json().catch(()=>({}));
     if(!r.ok){const e=new Error(d.error?.message||d.message||("Model discovery failed: HTTP "+r.status));e.status=r.status;throw e;}
     const items=d.data||d.models||[];
-    return items.map(m=>{const raw=String(m.id||m.name||"");const id=p.kind==="gemini"?raw.replace(/^models\\//,""):raw;return{id,name:String(m.display_name||m.name||m.id||"").replace(/^models\\//,"")};}).filter(m=>m.id).sort((a,b)=>a.id.localeCompare(b.id));
+    return items.map(m=>{const raw=String(m.id||m.name||"");const id=p.kind==="gemini"?raw.replace(/^models\//,""):raw;return{id,name:String(m.display_name||m.name||m.id||"").replace(/^models\//,"")};}).filter(m=>m.id).sort((a,b)=>a.id.localeCompare(b.id));
   }
   async request(id,messages,options={}){
     const p=PROVIDERS[id],c=this.configs[id];if(!p||!c?.apiKey){const e=new Error("Configure this provider in Settings first.");e.status=400;throw e;}
