@@ -89,7 +89,7 @@ class AlloRuntime {
 
   async findGguf(repo, requestedFilename) {
     if (requestedFilename) {
-      if (/-\\d{5}-of-\\d{5}\\.gguf$/i.test(requestedFilename)) throw new Error("Split GGUF files are not supported yet. Choose a single-file quantization.");
+      if (/-\d{5}-of-\d{5}\.gguf$/i.test(requestedFilename)) throw new Error("Split GGUF files are not supported yet. Choose a single-file quantization.");
       return requestedFilename;
     }
     const url = "https://huggingface.co/api/models/" + repo + "/tree/main?recursive=true&expand=false";
@@ -99,8 +99,8 @@ class AlloRuntime {
     const gguf = files.filter(x => x.type === "file" && typeof x.path === "string" && x.path.toLowerCase().endsWith(".gguf"));
     if (!gguf.length) throw new Error("This repository has no GGUF model file. Allo currently loads single-file GGUF models.");
     const preferred = gguf.find(x => /q4_k_m/i.test(x.path)) || gguf.find(x => /q4_0/i.test(x.path)) || gguf[0];
-    if (preferred.path.includes("..") || preferred.path.includes("\\\\") || preferred.path.startsWith("/")) throw new Error("Invalid model file path returned by the registry.");
-    if (/-\\d{5}-of-\\d{5}\\.gguf$/i.test(preferred.path)) throw new Error("This repository only exposes split GGUF weights in the selected quantization. Choose a single-file GGUF variant.");
+    if (preferred.path.includes("..") || preferred.path.includes("\\") || preferred.path.startsWith("/")) throw new Error("Invalid model file path returned by the registry.");
+    if (/-\d{5}-of-\d{5}\.gguf$/i.test(preferred.path)) throw new Error("This repository only exposes split GGUF weights in the selected quantization. Choose a single-file GGUF variant.");
     return preferred.path;
   }
   async download(reference, onProgress = () => {}) {
