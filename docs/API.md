@@ -22,6 +22,17 @@ All requests are made to the Allo server. In production, use Basic authenticatio
 | POST | `/api/embed` | Generate embeddings |
 | POST | `/api/embeddings` | Legacy embeddings endpoint |
 
+## Allo workspace API
+
+These authenticated endpoints are implemented by Allo itself, not forwarded to Ollama:
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/workspace` | Read saved chats and prompt templates |
+| PUT | `/api/workspace` | Replace saved chats and prompt templates |
+
+The request body for `PUT` must contain `chats` and `prompts` arrays, with at most 500 entries in each. The server persists the data in `data/workspace.json`; Docker Compose mounts the `allo_data` volume at that location.
+
 ## OpenAI-compatible proxy
 
 | Method | Path |
