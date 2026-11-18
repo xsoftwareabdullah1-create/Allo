@@ -3,6 +3,7 @@ const path = require("path");
 const fs = require("node:fs/promises");
 const crypto = require("node:crypto");
 const { AlloRuntime } = require("./runtime");
+const { ProviderHub } = require("./providers");
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -14,6 +15,7 @@ if (process.env.NODE_ENV === "production" && (!AUTH_USER || !AUTH_PASS)) {
 }
 
 const runtime = new AlloRuntime();
+const providers = new ProviderHub(path.join(__dirname, "data"));
 const DATA_DIR = path.join(__dirname, "data");
 const STORE_FILE = path.join(DATA_DIR, "workspace.json");
 
@@ -61,6 +63,26 @@ async function writeWorkspace(data) {
   await fs.writeFile(temporary, JSON.stringify(data), { mode: 0o600 });
   await fs.rename(temporary, STORE_FILE);
 }
+
+app.get("/api/providers", (_req, res) => res.json({ providers: providers.list(), encryptionReady: Boolean(process.env.ALLO_ENCRYPTION_KEY) }));
+app.put("/api/providers/:id", async (req, res) => {
+  try { res.json({ ok: true, provider: await providers.configure({ ...req.body, provider: req.params.id }) }); }
+  catch (error) { res.status(error.status || 400).json({ error: error.message }); }
+});
+app.delete("/api/providers/:id", async (req, res) => {
+  try { await providers.remove(req.params.id); res.json({ ok: true }); }
+  catch (error) { res.status(error.status || 400).json({ error: error.message }); }
+});
+app.post("/api/providers/:id/test", async (req, res) => {
+  try { const result = await providers.request(req.params.id, [{ role: "user", content: "Reply with exactly: Allo connection successful." }], { max_tokens: 32, temperature: 0 }); res.json({ ok: true, model: result.model, reply: result.message.content }); }
+  catch (error) { res.status(error.status || 500).json({ error: error.message }); }
+});
+app.post("/api/providers/chat", async (req, res) => {
+  try {
+    const result = await providers.request(req.body?.provider, req.body?.messages || [], req.body?.options || {});
+    res.json(result);
+  } catch (error) { res.status(error.status || 500).json({ error: error.message }); }
+});
 
 app.get("/health", async (_req, res) => { const binary = await runtime.binaryStatus(); res.status(binary.available ? 200 : 503).json({ ok: binary.available, app: "Allo", engine: "llama.cpp", runtime: binary, models: runtime.models.size, loaded: runtime.processes.size }); });
 app.get("/api/config", async (_req, res) => res.json({
@@ -248,6 +270,7 @@ app.post("/v1/embeddings", (_req, res) => res.status(501).json({ error: "Embeddi
 app.get("*", (_req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 
 async function start() {
+  await providers.init();
   await runtime.init();
   const server = app.listen(PORT, "0.0.0.0", () => console.log("Allo native runtime listening on port " + PORT));
   const shutdown = async () => {
