@@ -17,7 +17,13 @@ function showView(name) {
   $("sidebar").classList.remove("open");
   if(name==="models") loadModels(); if(name==="running") loadRunning(); if(name==="explore") renderCatalog(); if(name==="compare") populateCompare(); if(name==="prompts") renderPrompts(); if(name==="embeddings") populateEmbeddingModels();
 }
-document.querySelectorAll(".nav-item[data-view]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
+document.querySelectorAll(".nav-item[data-view]").forEach(b=>b.addEventListener("click",()=>{
+  showView(b.dataset.view);
+  if(b.dataset.targetSection){
+    const target=$(b.dataset.targetSection);
+    if(target){setTimeout(()=>target.scrollIntoView({behavior:"smooth",block:"start"}),80);}
+  }
+}));
 $("menuToggle").onclick=()=>$("sidebar").classList.toggle("open");
 $("newChat").onclick=()=>newChat();
 $("refreshBtn").onclick=()=>refreshAll();
