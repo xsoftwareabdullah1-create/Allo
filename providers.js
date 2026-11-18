@@ -4,9 +4,9 @@ const crypto = require("node:crypto");
 
 const PROVIDERS = {
   openai:{name:"OpenAI",kind:"openai",baseUrl:"https://api.openai.com/v1",model:"gpt-6.2-astra"},
-  anthropic:{name:"Anthropic Claude",kind:"anthropic",baseUrl:"https://api.anthropic.com/v1",model:"claude-sonnet-4-5"},
+  anthropic:{name:"Anthropic Claude",kind:"anthropic",baseUrl:"https://api.anthropic.com/v1",model:"claude-opus-5-5"},
   google:{name:"Google Gemini",kind:"gemini",baseUrl:"https://generativelanguage.googleapis.com/v1beta",model:"gemini-3.8-flash"},
-  deepseek:{name:"DeepSeek",kind:"openai",baseUrl:"https://api.deepseek.com/v1",model:"deepseek-v4.1-flash-1017"},
+  deepseek:{name:"DeepSeek",kind:"openai",baseUrl:"https://api.deepseek.com/v1",model:"deepseek-flash"},
   groq:{name:"Groq",kind:"openai",baseUrl:"https://api.groq.com/openai/v1",model:"openai/gpt-oss-120b"},
   openrouter:{name:"OpenRouter",kind:"openai",baseUrl:"https://openrouter.ai/api/v1",model:"openrouter/auto"},
   together:{name:"Together AI",kind:"openai",baseUrl:"https://api.together.xyz/v1",model:"meta-llama/Llama-3.3-70B-Instruct-Turbo"},
