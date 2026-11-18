@@ -7,7 +7,7 @@ All endpoints are served by Allo. Production web access uses Basic authenticatio
 |---|---|---|
 | GET | `/health` | Allo and runtime health |
 | GET | `/api/config` | Runtime configuration summary |
-| GET | `/api/tags` | List locally downloaded GGUF models |
+| GET | `/api/catalog?q=llama` | Search live Hugging Face GGUF model repositories |\n| GET | `/api/tags` | List locally downloaded GGUF models |
 | GET | `/api/ps` | List currently loaded inference processes |
 | GET | `/api/version` | Allo runtime version |
 | POST | `/api/pull` | Download a GGUF model from Hugging Face |
@@ -61,3 +61,4 @@ Configure a persistent server environment variable named `ALLO_ENCRYPTION_KEY` b
 | POST | `/api/providers/chat` | Send a non-streaming chat request through a configured provider |
 
 Example provider configuration: `PUT /api/providers/openai` with `{ "apiKey": "YOUR_KEY", "model": "gpt-4o-mini", "inputPricePerMillion": 0.15, "outputPricePerMillion": 0.60, "monthlyBudgetUsd": 10 }`. The `custom` provider additionally requires an HTTPS `baseUrl` and model ID. Chat requests use `{ "provider": "openai", "messages": [{ "role": "user", "content": "Hello" }] }`.
+\n## Live model catalogue\n\nThe Explore models page queries the Hugging Face model API for GGUF repositories, sorts results by downloads, and supports text search. Select Download model to install a repository. Allo currently selects a preferred single-file quantization (Q4_K_M, then Q4_0, then the first available GGUF). Split GGUF repositories are not supported by this runtime yet. Catalogue availability requires outbound internet access from the Allo server.\n
