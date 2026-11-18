@@ -10,7 +10,7 @@ Allo gives you one web interface to chat with local models, discover and manage 
 
 | Module | Capabilities |
 |---|---|
-| Chat | Streaming conversations, model selection, system instructions, temperature, context size and keep-alive controls |
+| Chat | Streaming conversations, image attachments for vision models, model selection, system instructions, temperature, context size and keep-alive controls |
 | Model management | Installed model list, metadata, pull, copy, create, push and delete |
 | Explore | Searchable featured model catalogue with one-click pull |
 | Running | Inspect models currently loaded by the Ollama server |
