@@ -4,7 +4,15 @@
   "private": true,
   "description": "A self-hosted AI workspace for Ollama-compatible model servers",
   "main": "server.js",
-  "scripts": { "start": "node server.js", "dev": "node --watch server.js" },
-  "engines": { "node": ">=20" },
-  "dependencies": { "express": "^4.21.2" }
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
 }
