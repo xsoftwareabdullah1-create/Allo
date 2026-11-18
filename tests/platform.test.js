@@ -54,3 +54,11 @@ test("chat UI supports image inputs for vision models", () => {
   assert.match(js, /FileReader/);
   assert.match(js, /images:m\.images\.map/);
 });
+
+test("chat exposes tool definitions and renders tool-call responses", () => {
+  const html = read("public/index.html");
+  const js = read("public/app.js");
+  assert.match(html, /id="toolDefinitions"/);
+  assert.match(js, /data\.message\?\.tool_calls/);
+  assert.match(js, /Tool calls:/);
+});
