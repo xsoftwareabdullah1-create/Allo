@@ -56,7 +56,7 @@ Build and start:
 docker compose up -d --build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and sign in. On first launch, choose **Download starter model**. Allo downloads a small Qwen 2.5 0.5B GGUF model (roughly 430–490 MB depending on quantization) from Hugging Face; after the download completes, select it in Chat and send your first message. You can also open **Models** to install a larger model. The starter model is intentionally small and is useful for trying the runtime, not a top-tier reasoning model. The model weights are not bundled in the Git repository because they are large files.
+Open [http://localhost:3000](http://localhost:3000) and sign in. On first launch, choose **Download starter model**. Allo downloads a small Qwen 2.5 0.5B GGUF model (roughly 490 MB for the recommended Q4_K_M quantization) from Hugging Face; after the download completes, select it in Chat and send your first message. You can also open **Models** to install a larger model. The starter model is intentionally small and is useful for trying the runtime, not a top-tier reasoning model. The model weights are not bundled in the Git repository because they are large files.
 
 ```text
 Qwen/Qwen2.5-0.5B-Instruct-GGUF
