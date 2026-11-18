@@ -27,7 +27,7 @@ app.use((req, res, next) => {
   next();
 });
 if (AUTH_USER && AUTH_PASS) {
-  app.use((req, res, next) => {
+  app.use(async (req, res, next) => {
     const header = req.headers.authorization || "";
     if (header.startsWith("Bearer ")) {
       const token = header.slice(7), supplied = Buffer.from(token);
