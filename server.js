@@ -1,5 +1,6 @@
 const express = require("express");
 const path = require("path");
+const fs = require("node:fs/promises");
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -38,6 +39,43 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/health", (_req, res) => res.json({ ok: true, app: "Allo", upstream: OLLAMA_BASE_URL }));
 app.get("/api/config", (_req, res) => res.json({ provider: "Ollama-compatible", endpoint: "/api", configured: true }));
+
+const DATA_DIR = path.join(__dirname, "data");
+const STORE_FILE = path.join(DATA_DIR, "workspace.json");
+async function readWorkspace() {
+  try {
+    const raw = await fs.readFile(STORE_FILE, "utf8");
+    const data = JSON.parse(raw);
+    return { chats: Array.isArray(data.chats) ? data.chats : [], prompts: Array.isArray(data.prompts) ? data.prompts : [] };
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+    return { chats: [], prompts: [] };
+  }
+}
+async function writeWorkspace(data) {
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  const temporary = STORE_FILE + ".tmp";
+  await fs.writeFile(temporary, JSON.stringify(data), { mode: 0o600 });
+  await fs.rename(temporary, STORE_FILE);
+}
+app.get("/api/workspace", async (_req, res) => {
+  try { res.json(await readWorkspace()); }
+  catch (error) { res.status(500).json({ error: "Could not read workspace data", detail: error.message }); }
+});
+app.put("/api/workspace", async (req, res) => {
+  const chats = req.body?.chats;
+  const prompts = req.body?.prompts;
+  if (!Array.isArray(chats) || !Array.isArray(prompts) || chats.length > 500 || prompts.length > 500) {
+    return res.status(400).json({ error: "Workspace must contain chat and prompt arrays (maximum 500 each)." });
+  }
+  try {
+    await writeWorkspace({ chats, prompts, updatedAt: new Date().toISOString() });
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ error: "Could not save workspace data", detail: error.message });
+  }
+});
+
 
 app.all("/api/:endpoint", async (req, res) => {
   const method = req.method.toUpperCase();
