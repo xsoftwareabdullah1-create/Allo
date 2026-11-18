@@ -180,6 +180,7 @@ class AlloRuntime {
     ], { stdio: ["ignore", "ignore", "pipe"] });
     const record = { child, port, lastUsed: Date.now(), stderr: "" };
     child.stderr.on("data", chunk => { record.stderr = (record.stderr + chunk.toString()).slice(-4000); });
+    child.on("error", error => { record.spawnError = error; });
     child.on("exit", () => { if (this.processes.get(id) === record) this.processes.delete(id); });
     this.processes.set(id, record);
     try {
@@ -194,6 +195,7 @@ class AlloRuntime {
   async waitUntilReady(id, record) {
     const deadline = Date.now() + Number(process.env.ALLO_MODEL_START_TIMEOUT || 180000);
     while (Date.now() < deadline) {
+      if (record.spawnError) throw new Error(record.spawnError.message);
       if (record.child.exitCode !== null) throw new Error("llama-server exited during startup.");
       try {
         const response = await fetch("http://127.0.0.1:" + record.port + "/health", { signal: AbortSignal.timeout(1500) });
