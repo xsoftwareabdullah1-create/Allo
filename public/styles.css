@@ -149,3 +149,24 @@ h1,h2,h3{color:#19233a}
 .billing-stats small{display:block;color:#7a8499;font-size:10px}.billing-stats strong{display:block;color:#242d47;font-size:19px;margin-top:5px;overflow-wrap:anywhere}
 .billing-provider-row{display:flex;justify-content:space-between;gap:12px;padding:9px 2px;border-top:1px solid #e8edf5;font-size:12px}.billing-provider-row strong{color:#3f46a5}.billing-note{font-size:11px;color:#778198;line-height:1.5}
 @media(max-width:760px){.billing-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.billing-provider-row{align-items:flex-start;flex-direction:column}.chat-toolbar{align-items:flex-start;flex-direction:column}}
+
+
+/* Allo light workspace: explicit surfaces and mobile-safe controls */
+:root{color-scheme:light!important;--bg:#f4f7fc!important;--panel:#fff!important;--panel2:#f8faff!important;--line:#e4e9f2!important;--muted:#697386!important;--text:#172033!important}
+html,body,.app-shell,.main,#chatView,.view{background-color:#f5f7fc!important;color:#172033!important}
+body{background:linear-gradient(145deg,#f8faff,#eef2f9)!important}
+.sidebar{background:#fff!important;color:#172033!important}
+.topbar{background:rgba(255,255,255,.96)!important;color:#172033!important}
+.nav-item{color:#59647a!important}
+.nav-item.active,.nav-item:hover{background:#eef0ff!important;color:#3738a6!important}
+h1,h2,h3,.welcome h2,.crumb b{color:#19233a!important}
+.welcome p,.page-heading p,.composer-hint,.disclaimer{color:#69768c!important}
+.chat-options,.chat-options summary{background:#fff!important;color:#59647a!important}
+.chat-options,.install-panel,.settings-card,.catalog-card,.model-card,.prompt-editor,.compare-results,.table-wrap{background:#fff!important;color:#24304a!important;border-color:#e3e8f1!important}
+.chat-toolbar select,.chat-options select,.chat-options textarea,.chat-options input,.composer,.composer textarea,.toolbar-row input,.toolbar-row select,.inline-form input,.settings-card input,.settings-card select,.settings-card textarea,.playground-controls select,.api-body,.large-input{background:#fff!important;color:#202a40!important;border-color:#dfe5ef!important}
+.composer{box-shadow:0 10px 34px #23365a12!important}
+.message.assistant .message-content{color:#253149!important}
+.message.user .message-content{background:#eef0ff!important;color:#202a40!important}
+.billing-panel{background:#f7f8ff!important;border-color:#e2e6f2!important}
+.billing-stats>div{background:#fff!important}
+@media(max-width:760px){.sidebar{background:#fff!important}.main{background:#f5f7fc!important}.billing-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
