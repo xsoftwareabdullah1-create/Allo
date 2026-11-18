@@ -3,10 +3,10 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 
 const PROVIDERS = {
-  openai:{name:"OpenAI",kind:"openai",baseUrl:"https://api.openai.com/v1",model:"gpt-4o-mini"},
+  openai:{name:"OpenAI",kind:"openai",baseUrl:"https://api.openai.com/v1",model:"gpt-6.2-astra"},
   anthropic:{name:"Anthropic Claude",kind:"anthropic",baseUrl:"https://api.anthropic.com/v1",model:"claude-sonnet-4-5"},
-  google:{name:"Google Gemini",kind:"gemini",baseUrl:"https://generativelanguage.googleapis.com/v1beta",model:"gemini-2.5-flash"},
-  deepseek:{name:"DeepSeek",kind:"openai",baseUrl:"https://api.deepseek.com/v1",model:"deepseek-v4-flash"},
+  google:{name:"Google Gemini",kind:"gemini",baseUrl:"https://generativelanguage.googleapis.com/v1beta",model:"gemini-3.8-flash"},
+  deepseek:{name:"DeepSeek",kind:"openai",baseUrl:"https://api.deepseek.com/v1",model:"deepseek-v4.1-flash-1017"},
   groq:{name:"Groq",kind:"openai",baseUrl:"https://api.groq.com/openai/v1",model:"openai/gpt-oss-120b"},
   openrouter:{name:"OpenRouter",kind:"openai",baseUrl:"https://openrouter.ai/api/v1",model:"openrouter/auto"},
   together:{name:"Together AI",kind:"openai",baseUrl:"https://api.together.xyz/v1",model:"meta-llama/Llama-3.3-70B-Instruct-Turbo"},
@@ -18,9 +18,9 @@ const PROVIDERS = {
   cohere:{name:"Cohere",kind:"openai",baseUrl:"https://api.cohere.com/compatibility/v1",model:"command-a-03-2025"},
   nvidia:{name:"NVIDIA NIM",kind:"openai",baseUrl:"https://integrate.api.nvidia.com/v1",model:"nvidia/llama-3.1-nemotron-70b-instruct"},
   huggingface:{name:"Hugging Face Inference",kind:"openai",baseUrl:"https://router.huggingface.co/v1",model:"Qwen/Qwen2.5-7B-Instruct"},
-  qwen:{name:"Qwen / Alibaba DashScope",kind:"openai",baseUrl:"https://dashscope.aliyuncs.com/compatible-mode/v1",model:"qwen-plus"},
+  qwen:{name:"Qwen / Alibaba DashScope",kind:"openai",baseUrl:"https://dashscope-intl.aliyuncs.com/compatible-mode/v1",model:"qwen4-max"},
   kimi:{name:"Moonshot Kimi",kind:"openai",baseUrl:"https://api.moonshot.ai/v1",model:"moonshot-v1-8k"},
-  zai:{name:"Z.ai / GLM",kind:"openai",baseUrl:"https://api.z.ai/api/paas/v4",model:"glm-4.5"},
+  zai:{name:"Z.ai / GLM",kind:"openai",baseUrl:"https://api.z.ai/api/paas/v4",model:"glm-5.3"},
   siliconflow:{name:"SiliconFlow",kind:"openai",baseUrl:"https://api.siliconflow.com/v1",model:"Qwen/Qwen2.5-7B-Instruct"},
   novita:{name:"Novita AI",kind:"openai",baseUrl:"https://api.novita.ai/v3/openai",model:"meta-llama/llama-3.1-8b-instruct"},
   inference:{name:"Inference.net",kind:"openai",baseUrl:"https://api.inference.net/v1",model:"meta-llama/Llama-3.3-70B-Instruct"},
@@ -76,15 +76,18 @@ class ProviderHub {
     return {currency:"USD",month,requests:this.usage.requests||0,inputTokens:this.usage.inputTokens||0,outputTokens:this.usage.outputTokens||0,providers:rows,notice:"Token counts are provider-reported where available. Estimated costs are calculated only when you enter your provider's current per-million-token rates. This is not the provider's invoice or live account balance."};
   }
   async models(id){
-    const p=PROVIDERS[id],c=this.configs[id];if(!p||!c?.apiKey){const e=new Error("Configure this provider first.");e.status=400;throw e;}
+    const p=PROVIDERS[id],c=this.configs[id];
+    if(!p||!c?.apiKey){const e=new Error("Save this provider's API key first, then discover models.");e.status=400;throw e;}
     let url,headers;
-    if(p.kind==="gemini"){url=c.baseUrl+"/models?key="+encodeURIComponent(c.apiKey);headers={};}
-    else if(p.kind==="anthropic"){url=c.baseUrl+"/models";headers={"x-api-key":c.apiKey,"anthropic-version":"2023-06-01"};}
-    else{url=c.baseUrl+"/models";headers={authorization:"Bearer "+c.apiKey};}
+    if(p.kind==="gemini"){url=c.baseUrl.replace(/\\/+$/,"")+"/models?key="+encodeURIComponent(c.apiKey);headers={};}
+    else if(p.kind==="anthropic"){url=c.baseUrl.replace(/\\/+$/,"")+"/models";headers={"x-api-key":c.apiKey,"anthropic-version":"2023-06-01"};}
+    else{url=c.baseUrl.replace(/\\/+$/,"")+"/models";headers={authorization:"Bearer "+c.apiKey};}
     const r=await fetch(url,{headers,signal:AbortSignal.timeout(30000)}),d=await r.json().catch(()=>({}));
-    if(!r.ok){const e=new Error(d.error?.message||d.message||("Model discovery failed: HTTP "+r.status));e.status=r.status;throw e;}
-    const items=d.data||d.models||[];
-    return items.map(m=>{const raw=String(m.id||m.name||"");const id=p.kind==="gemini"?raw.replace(/^models\//,""):raw;return{id,name:String(m.display_name||m.name||m.id||"").replace(/^models\//,"")};}).filter(m=>m.id).sort((a,b)=>a.id.localeCompare(b.id));
+    if(!r.ok){const detail=d.error?.message||d.error?.type||d.message||JSON.stringify(d).slice(0,300);const e=new Error("Model discovery failed ("+r.status+"): "+detail);e.status=r.status;throw e;}
+    const items=Array.isArray(d.data)?d.data:Array.isArray(d.models)?d.models:Array.isArray(d)?d:[];
+    const models=items.map(m=>{const raw=String(m.id||m.name||"");const modelId=p.kind==="gemini"?raw.replace(/^models\\//,""):raw;return{id:modelId,name:String(m.display_name||m.displayName||m.name||raw).replace(/^models\\//,"")};}).filter(m=>m.id);
+    if(!models.length){const e=new Error("Provider returned no models from its /models endpoint. Check API key, base URL and model-list support; you can still enter a model ID manually.");e.status=502;throw e;}
+    return models.sort((a,b)=>a.id.localeCompare(b.id));
   }
   async request(id,messages,options={}){
     const p=PROVIDERS[id],c=this.configs[id];if(!p||!c?.apiKey){const e=new Error("Configure this provider in Settings first.");e.status=400;throw e;}
