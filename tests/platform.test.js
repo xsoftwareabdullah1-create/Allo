@@ -7,35 +7,29 @@ const read = file => fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 test("Allo contains all workspace modules", () => {
   const html = read("public/index.html");
   for (const view of ["chat","models","running","explore","compare","prompts","embeddings","playground","settings"]) {
-    assert.match(html, new RegExp('id="' + view + 'View"'));
-    assert.match(html, new RegExp('data-view="' + view + '"'));
+    assert.ok(html.includes('id="' + view + 'View"'));
+    assert.ok(html.includes('data-view="' + view + '"'));
   }
 });
 
 test("Allo owns a GGUF model registry and downloader", () => {
   const runtime = read("runtime.js");
-  assert.match(runtime, /class AlloRuntime/);
-  assert.match(runtime, /huggingface\\.co/);
-  assert.match(runtime, /\\.gguf/);
-  assert.match(runtime, /spawn\\(SERVER_BIN/);
-  assert.match(runtime, /async download/);
-  assert.match(runtime, /async stop/);
+  for (const token of ["class AlloRuntime", "huggingface.co", ".gguf", "spawn(SERVER_BIN", "async download", "async stop"]) assert.ok(runtime.includes(token), "missing " + token);
 });
 
 test("server uses its own runtime and has no Ollama upstream", () => {
   const server = read("server.js");
-  assert.match(server, /new AlloRuntime/);
-  assert.match(server, /runtime\\.download/);
-  assert.match(server, /runtime\\.request/);
-  assert.doesNotMatch(server, /OLLAMA_BASE_URL|ollama:11434|ollama\\.com/);
+  for (const token of ["new AlloRuntime", "runtime.download", "runtime.request"]) assert.ok(server.includes(token));
+  assert.ok(!server.includes("OLLAMA_BASE_URL"));
+  assert.ok(!server.includes("ollama:11434"));
 });
 
 test("production requires configured authentication", () => {
   const server = read("server.js");
-  assert.match(server, /NODE_ENV === "production"/);
-  assert.match(server, /ALLO_USERNAME/);
-  assert.match(server, /ALLO_PASSWORD/);
-  assert.match(server, /timingSafeEqual/);
+  assert.ok(server.includes('NODE_ENV === "production"'));
+  assert.ok(server.includes("ALLO_USERNAME"));
+  assert.ok(server.includes("ALLO_PASSWORD"));
+  assert.ok(server.includes("timingSafeEqual"));
 });
 
 test("frontend wires core workspace modules", () => {
@@ -45,25 +39,27 @@ test("frontend wires core workspace modules", () => {
 
 test("workspace persistence validates and atomically writes data", () => {
   const server = read("server.js");
-  assert.match(server, /app\\.get\\("\\/api\\/workspace"/);
-  assert.match(server, /app\\.put\\("\\/api\\/workspace"/);
-  assert.match(server, /chats\\.length > 500/);
-  assert.match(server, /prompts\\.length > 500/);
-  assert.match(server, /fs\\.rename\\(temporary, STORE_FILE\\)/);
+  assert.ok(server.includes('app.get("/api/workspace"'));
+  assert.ok(server.includes('app.put("/api/workspace"'));
+  assert.ok(server.includes("chats.length > 500"));
+  assert.ok(server.includes("prompts.length > 500"));
+  assert.ok(server.includes("fs.rename(temporary, STORE_FILE)"));
 });
 
 test("Docker builds and ships llama.cpp without Ollama", () => {
   const docker = read("Dockerfile");
   const compose = read("docker-compose.yml");
-  assert.match(docker, /ggml-org\\/llama\\.cpp/);
-  assert.match(docker, /llama-server/);
-  assert.doesNotMatch(compose, /ollama\\/ollama|ollama_data|OLLAMA_BASE_URL/);
-  assert.match(compose, /allo_data/);
+  assert.ok(docker.includes("ggml-org/llama.cpp"));
+  assert.ok(docker.includes("llama-server"));
+  assert.ok(!compose.includes("ollama/ollama"));
+  assert.ok(!compose.includes("ollama_data"));
+  assert.ok(!compose.includes("OLLAMA_BASE_URL"));
+  assert.ok(compose.includes("allo_data"));
 });
 
 test("API documents native GGUF model downloads", () => {
   const api = read("docs/API.md");
-  assert.match(api, /Hugging Face/);
-  assert.match(api, /GGUF/);
-  assert.match(api, /\\/v1\\/chat\\/completions/);
+  assert.ok(api.includes("Hugging Face"));
+  assert.ok(api.includes("GGUF"));
+  assert.ok(api.includes("/v1/chat/completions"));
 });
