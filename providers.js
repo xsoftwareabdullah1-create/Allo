@@ -78,10 +78,10 @@ class ProviderHub {
   async models(id,overrides={}){
     const p=PROVIDERS[id],c={...(this.configs[id]||{}),...overrides};
     if(!p||!c?.apiKey){const e=new Error("Save this provider's API key first, then discover models.");e.status=400;throw e;}
-    let url,headers;
-    if(p.kind==="gemini"){url=c.baseUrl.replace(/\\/+$/,"")+"/models?key="+encodeURIComponent(c.apiKey);headers={};}
-    else if(p.kind==="anthropic"){url=c.baseUrl.replace(/\\/+$/,"")+"/models";headers={"x-api-key":c.apiKey,"anthropic-version":"2023-06-01"};}
-    else{url=c.baseUrl.replace(/\\/+$/,"")+"/models";headers={authorization:"Bearer "+c.apiKey};}
+    let url,headers,base=String(c.baseUrl||"");while(base.endsWith("/"))base=base.slice(0,-1);
+    if(p.kind==="gemini"){url=base+"/models?key="+encodeURIComponent(c.apiKey);headers={};}
+    else if(p.kind==="anthropic"){url=base+"/models";headers={"x-api-key":c.apiKey,"anthropic-version":"2023-06-01"};}
+    else{url=base+"/models";headers={authorization:"Bearer "+c.apiKey};}
     const r=await fetch(url,{headers,signal:AbortSignal.timeout(30000)}),d=await r.json().catch(()=>({}));
     if(!r.ok){const detail=d.error?.message||d.error?.type||d.message||JSON.stringify(d).slice(0,300);const e=new Error("Model discovery failed ("+r.status+"): "+detail);e.status=r.status;throw e;}
     const items=Array.isArray(d.data)?d.data:Array.isArray(d.models)?d.models:Array.isArray(d)?d:[];
