@@ -76,7 +76,7 @@ app.delete("/api/keys/:id",async(req,res)=>{try{const rows=await readApiKeys(),n
 
 app.get("/api/providers", (_req, res) => res.json({ providers: providers.list(), encryptionReady: Boolean(process.env.ALLO_ENCRYPTION_KEY) }));
 app.get("/api/providers/:id/models", async (req,res)=>{try{res.json({models:await providers.models(req.params.id)});}catch(error){res.status(error.status||502).json({error:error.message});}});
-app.post("/api/providers/:id/models", async (req,res)=>{try{const apiKey=typeof req.body?.apiKey==="string"?req.body.apiKey.trim():"";const baseUrl=typeof req.body?.baseUrl==="string"?req.body.baseUrl.trim():"";res.json({models:await providers.models(req.params.id,{...(apiKey?{apiKey}:{}),...(baseUrl?{baseUrl:baseUrl.replace(/\\/+$/,"")}: {})})});}catch(error){res.status(error.status||502).json({error:error.message});}});
+app.post("/api/providers/:id/models", async (req,res)=>{try{const apiKey=typeof req.body?.apiKey==="string"?req.body.apiKey.trim():"";const baseUrl=typeof req.body?.baseUrl==="string"?req.body.baseUrl.trim():"";res.json({models:await providers.models(req.params.id,{...(apiKey?{apiKey}:{}),...(baseUrl?{baseUrl}: {})})});}catch(error){res.status(error.status||502).json({error:error.message});}});
 app.get("/api/billing", (_req,res)=>res.json(providers.billing()));
 app.put("/api/providers/:id", async (req, res) => {
   try { res.json({ ok: true, provider: await providers.configure({ ...req.body, provider: req.params.id }) }); }
