@@ -125,7 +125,7 @@ test("Allo exposes expanded provider discovery and billing controls", () => {
   assert.ok(js.includes('api("providers/"+id+"/models")'));
 });
 
-\ntest("Explore models uses a live Hugging Face GGUF catalogue instead of only a fixed list", () => {
+test("Explore models uses a live Hugging Face GGUF catalogue instead of only a fixed list", () => {
   const server = read("server.js");
   const js = read("public/app.js");
   assert.ok(server.includes('app.get("/api/catalog"'));
