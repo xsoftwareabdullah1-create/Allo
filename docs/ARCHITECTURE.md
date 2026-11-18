@@ -6,6 +6,7 @@ Allo is a browser-based control plane for an Ollama inference server. It does no
 
 - **Browser UI** — static HTML, CSS and JavaScript in `public/`; chat history and prompt snippets are stored in the current browser's local storage.
 - **Allo server** — Express application in `server.js`; serves the UI, applies authentication, validates allowed proxy routes and streams upstream responses.
+- **Workspace store** — `data/workspace.json` persists chats and prompt templates; mount `/app/data` as a persistent volume.
 - **Inference runtime** — Ollama, configured with `OLLAMA_BASE_URL`. Model weights and running model processes live on the Ollama host.
 - **Container deployment** — Docker Compose can run both Allo and Ollama with a persistent model volume.
 
@@ -21,6 +22,7 @@ Allo is a browser-based control plane for an Ollama inference server. It does no
 
 - `/api/*` — selected native Ollama endpoints.
 - `/v1/*` — selected OpenAI-compatible Ollama endpoints for SDK integrations.
+- `/api/workspace` — authenticated chat and prompt persistence endpoint.
 - `/health` — Allo process health check.
 
 ## Security
