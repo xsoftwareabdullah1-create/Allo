@@ -70,3 +70,10 @@ test("model management includes metadata inspection and registry publishing", ()
   assert.match(js, /async function modelInfo/);
   assert.match(js, /async function pushModel/);
 });
+
+test("custom model creation accepts a Modelfile", () => {
+  const html = read("public/index.html");
+  const js = read("public/app.js");
+  assert.match(html, /id="createModelfile"/);
+  assert.match(js, /modelfile\?\{model:name,modelfile\}/);
+});
