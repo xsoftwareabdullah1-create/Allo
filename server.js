@@ -97,12 +97,13 @@ app.post("/api/providers/chat", async (req, res) => {
   } catch (error) { res.status(error.status || 500).json({ error: error.message }); }
 });
 
-app.get("/health", async (_req, res) => { const binary = await runtime.binaryStatus(); res.status(binary.available ? 200 : 503).json({ ok: binary.available, app: "Allo", engine: "llama.cpp", runtime: binary, models: runtime.models.size, loaded: runtime.processes.size }); });
+app.get("/health", async (_req, res) => { const binary = await runtime.binaryStatus(); res.status(200).json({ ok: true, app: "Allo", engine: "llama.cpp", localInferenceReady: binary.available, runtime: binary, models: runtime.models.size, loaded: runtime.processes.size }); });
 app.get("/api/config", async (_req, res) => res.json({
   provider: "Allo Native GGUF Runtime",
   engine: "llama.cpp",
   endpoint: "/api",
   configured: true,
+  localInferenceReady: (await runtime.binaryStatus()).available,
   modelFormat: "GGUF",
   loadedModels: runtime.processes.size,
   maxLoadedModels: Number(process.env.ALLO_MAX_LOADED_MODELS || 1),
@@ -278,7 +279,14 @@ app.post("/api/copy", async (req, res) => {
   try { await runtime.copy(req.body?.source, req.body?.destination); res.json({ ok: true }); }
   catch (error) { sendRuntimeError(res, error); }
 });
-app.post("/api/create", (_req, res) => res.status(501).json({ error: "Custom Modelfiles are not supported by the GGUF runtime yet. Download a GGUF model from Hugging Face instead." }));
+app.post("/api/create", async (req, res) => {
+  const name = typeof req.body?.model === "string" ? req.body.model.trim() : "";
+  const from = typeof req.body?.from === "string" ? req.body.from.trim() : "";
+  if (req.body?.modelfile) return res.status(400).json({ error: "Custom Modelfile instructions are not supported yet. Create a lightweight alias from an installed GGUF model instead." });
+  if (!name || !from) return res.status(400).json({ error: "Provide a new model name and the name of an installed base model." });
+  try { const model = await runtime.alias(from, name); res.status(201).json({ ok: true, model: { name: model.id, source: from, size: model.size, alias: true } }); }
+  catch (error) { res.status(error.status || 400).json({ error: error.message }); }
+});
 app.post("/api/push", (_req, res) => res.status(501).json({ error: "Registry publishing is not available yet. Allo currently downloads GGUF files from Hugging Face." }));
 app.post("/api/embed", (_req, res) => res.status(501).json({ error: "Embedding model mode is not enabled in this first native runtime release. It is on the runtime roadmap." }));
 app.post("/api/embeddings", (_req, res) => res.status(501).json({ error: "Embedding model mode is not enabled in this first native runtime release. It is on the runtime roadmap." }));
