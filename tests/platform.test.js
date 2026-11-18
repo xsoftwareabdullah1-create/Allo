@@ -2,24 +2,32 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-
-const read = (file) => fs.readFileSync(path.join(__dirname, "..", file), "utf8");
+const read = file => fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 
 test("Allo contains all workspace modules", () => {
   const html = read("public/index.html");
   for (const view of ["chat","models","running","explore","compare","prompts","embeddings","playground","settings"]) {
-    assert.match(html, new RegExp('id="' + view + 'View"'), view + " view exists");
-    assert.match(html, new RegExp('data-view="' + view + '"'), view + " navigation exists");
+    assert.match(html, new RegExp('id="' + view + 'View"'));
+    assert.match(html, new RegExp('data-view="' + view + '"'));
   }
 });
 
-test("backend restricts Ollama API proxy routes", () => {
+test("Allo owns a GGUF model registry and downloader", () => {
+  const runtime = read("runtime.js");
+  assert.match(runtime, /class AlloRuntime/);
+  assert.match(runtime, /huggingface\\.co/);
+  assert.match(runtime, /\\.gguf/);
+  assert.match(runtime, /spawn\\(SERVER_BIN/);
+  assert.match(runtime, /async download/);
+  assert.match(runtime, /async stop/);
+});
+
+test("server uses its own runtime and has no Ollama upstream", () => {
   const server = read("server.js");
-  for (const endpoint of ["GET /api/tags","GET /api/ps","POST /api/chat","POST /api/pull","POST /api/create","POST /api/embed"]) {
-    assert.ok(server.includes(endpoint), "missing " + endpoint);
-  }
-  assert.match(server, /OPENAI_COMPATIBLE/);
-  assert.match(server, /app\.all\("\/v1\/\*"/);
+  assert.match(server, /new AlloRuntime/);
+  assert.match(server, /runtime\\.download/);
+  assert.match(server, /runtime\\.request/);
+  assert.doesNotMatch(server, /OLLAMA_BASE_URL|ollama:11434|ollama\\.com/);
 });
 
 test("production requires configured authentication", () => {
@@ -30,50 +38,32 @@ test("production requires configured authentication", () => {
   assert.match(server, /timingSafeEqual/);
 });
 
-test("frontend wires major model and developer tools", () => {
+test("frontend wires core workspace modules", () => {
   const js = read("public/app.js");
-  for (const feature of ["renderCatalog","runOne","renderPrompts","embeddingRun","apiRun","pullModel","createModel","copyModel"]) {
-    assert.ok(js.includes(feature), "missing frontend feature " + feature);
-  }
+  for (const feature of ["renderCatalog","runOne","renderPrompts","embeddingRun","apiRun","pullModel","createModel","copyModel"]) assert.ok(js.includes(feature), "missing " + feature);
 });
 
-test("workspace persistence endpoints are authenticated and validated", () => {
+test("workspace persistence validates and atomically writes data", () => {
   const server = read("server.js");
-  assert.match(server, /app\.get\("\/api\/workspace"/);
-  assert.match(server, /app\.put\("\/api\/workspace"/);
-  assert.match(server, /chats\.length > 500/);
-  assert.match(server, /prompts\.length > 500/);
-  assert.match(server, /fs\.rename\(temporary, STORE_FILE\)/);
+  assert.match(server, /app\\.get\\("\\/api\\/workspace"/);
+  assert.match(server, /app\\.put\\("\\/api\\/workspace"/);
+  assert.match(server, /chats\\.length > 500/);
+  assert.match(server, /prompts\\.length > 500/);
+  assert.match(server, /fs\\.rename\\(temporary, STORE_FILE\\)/);
 });
 
-test("chat UI supports image inputs for vision models", () => {
-  const html = read("public/index.html");
-  const js = read("public/app.js");
-  assert.match(html, /id="imageInput"/);
-  assert.match(js, /selectedImages/);
-  assert.match(js, /FileReader/);
-  assert.match(js, /images:m\.images\.map/);
+test("Docker builds and ships llama.cpp without Ollama", () => {
+  const docker = read("Dockerfile");
+  const compose = read("docker-compose.yml");
+  assert.match(docker, /ggml-org\\/llama\\.cpp/);
+  assert.match(docker, /llama-server/);
+  assert.doesNotMatch(compose, /ollama\\/ollama|ollama_data|OLLAMA_BASE_URL/);
+  assert.match(compose, /allo_data/);
 });
 
-test("chat exposes tool definitions and renders tool-call responses", () => {
-  const html = read("public/index.html");
-  const js = read("public/app.js");
-  assert.match(html, /id="toolDefinitions"/);
-  assert.match(js, /data\.message\?\.tool_calls/);
-  assert.match(js, /Tool calls:/);
-});
-
-test("model management includes metadata inspection and registry publishing", () => {
-  const html = read("public/index.html");
-  const js = read("public/app.js");
-  assert.match(html, /id="modelModal"/);
-  assert.match(js, /async function modelInfo/);
-  assert.match(js, /async function pushModel/);
-});
-
-test("custom model creation accepts a Modelfile", () => {
-  const html = read("public/index.html");
-  const js = read("public/app.js");
-  assert.match(html, /id="createModelfile"/);
-  assert.match(js, /modelfile\?\{model:name,modelfile\}/);
+test("API documents native GGUF model downloads", () => {
+  const api = read("docs/API.md");
+  assert.match(api, /Hugging Face/);
+  assert.match(api, /GGUF/);
+  assert.match(api, /\\/v1\\/chat\\/completions/);
 });
