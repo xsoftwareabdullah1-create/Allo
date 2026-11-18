@@ -14,7 +14,7 @@ test("Allo contains all workspace modules", () => {
 
 test("Allo owns a GGUF model registry and downloader", () => {
   const runtime = read("runtime.js");
-  for (const token of ["class AlloRuntime", "huggingface.co", ".gguf", "spawn(SERVER_BIN", "async download", "async stop"]) assert.ok(runtime.includes(token), "missing " + token);
+  for (const token of ["class AlloRuntime", "huggingface.co", ".gguf", "spawn(serverBin", "async download", "async stop"]) assert.ok(runtime.includes(token), "missing " + token);
 });
 
 test("server uses its own runtime and has no Ollama upstream", () => {
