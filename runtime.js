@@ -161,8 +161,45 @@ class AlloRuntime {
     return this.models.get(id);
   }
 
+  async resolveServerBinary() {
+    const configured = process.env.ALLO_LLAMACPP_BIN || "llama-server";
+    const hasPath = configured.includes("/") || configured.includes("\\\\");
+    const candidates = hasPath
+      ? [path.resolve(configured)]
+      : [
+          ...String(process.env.PATH || "").split(path.delimiter).filter(Boolean).map(dir => path.join(dir, configured)),
+          path.join(__dirname, "bin", "llama-server"),
+          "/usr/local/bin/llama-server",
+          "/usr/bin/llama-server",
+          "/opt/llama-install/bin/llama-server",
+          "/opt/llama.cpp/build/bin/llama-server"
+        ];
+    for (const candidate of [...new Set(candidates)]) {
+      try {
+        await fs.access(candidate, require("node:fs").constants.X_OK);
+        return candidate;
+      } catch {}
+    }
+    const searched = candidates.join(", ");
+    throw new Error(
+      "llama-server executable not found. Allo's web app is running, but its inference engine is missing. " +
+      "Deploy with the repository Dockerfile/docker-compose.yml so llama.cpp is compiled into the image, " +
+      "or install llama.cpp and set ALLO_LLAMACPP_BIN to the full executable path. " +
+      "Searched: " + searched
+    );
+  }
+
+  async binaryStatus() {
+    try {
+      return { available: true, path: await this.resolveServerBinary() };
+    } catch (error) {
+      return { available: false, configured: process.env.ALLO_LLAMACPP_BIN || "llama-server", error: error.message };
+    }
+  }
+
   async start(id) {
     const item = this.get(id);
+    const serverBin = await this.resolveServerBinary();
     if (this.processes.has(id)) {
       const existing = this.processes.get(id);
       existing.lastUsed = Date.now();
@@ -174,7 +211,7 @@ class AlloRuntime {
       if (oldest) await this.stop(oldest[0]);
     }
     const port = this.nextPort++;
-    const child = spawn(SERVER_BIN, [
+    const child = spawn(serverBin, [
       "--model", item.path,
       "--alias", id,
       "--host", "127.0.0.1",
