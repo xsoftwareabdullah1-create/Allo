@@ -68,5 +68,34 @@ app.all("/api/:endpoint", async (req, res) => {
   }
 });
 
+
+const OPENAI_COMPATIBLE = new Set(["GET /v1/models","POST /v1/chat/completions","POST /v1/completions","POST /v1/embeddings"]);
+app.all("/v1/:endpoint", async (req, res) => {
+  const method = req.method.toUpperCase();
+  const endpoint = req.params.endpoint;
+  const key = method + " /v1/" + endpoint;
+  if (!OPENAI_COMPATIBLE.has(key)) return res.status(404).json({ error: "Unsupported OpenAI-compatible endpoint" });
+  try {
+    const upstream = await fetch(OLLAMA_BASE_URL + "/v1/" + endpoint, {
+      method,
+      headers: { "Content-Type": "application/json", "Accept": req.headers.accept || "application/json" },
+      body: method === "GET" ? undefined : JSON.stringify(req.body || {})
+    });
+    res.status(upstream.status);
+    const contentType = upstream.headers.get("content-type") || "application/json";
+    res.setHeader("Content-Type", contentType);
+    if (!upstream.body) return res.end();
+    const reader = upstream.body.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!res.write(Buffer.from(value))) await new Promise(resolve => res.once("drain", resolve));
+    }
+    return res.end();
+  } catch (error) {
+    return res.status(502).json({ error: "Could not reach the OpenAI-compatible Ollama endpoint.", detail: error.message });
+  }
+});
+
 app.get("*", (_req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 app.listen(PORT, "0.0.0.0", () => console.log(`Allo running on http://localhost:${PORT} → ${OLLAMA_BASE_URL}`));
