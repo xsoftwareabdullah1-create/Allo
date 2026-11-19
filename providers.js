@@ -41,7 +41,7 @@ class ProviderHub {
     this.keyFile=path.join(dataDir,"provider-encryption.key");
     this.configs={};this.usage={requests:0,inputTokens:0,outputTokens:0,providers:{},updatedAt:null};
   }
-  async init(){
+  get encryptionReady(){return Boolean(this.key);}\n  async init(){
     await fs.mkdir(path.dirname(this.file),{recursive:true});
     try{this.usage=JSON.parse(await fs.readFile(this.usageFile,"utf8"));}catch(e){if(e.code!=="ENOENT")throw e;}
     let masterSecret=process.env.ALLO_ENCRYPTION_KEY;
