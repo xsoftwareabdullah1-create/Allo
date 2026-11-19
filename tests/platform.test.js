@@ -199,3 +199,10 @@ test("OpenAI-compatible API lists configured cloud models and routes cloud chat 
  assert.ok(server.includes('chat.completion'));
  assert.ok(server.includes('Cloud provider streaming is not enabled'));
 });
+test("Ollama Cloud is available as a first-class OpenAI-compatible provider",()=>{
+ const providers=read("providers.js"),server=read("server.js"),html=read("public/index.html"),js=read("public/app.js");
+ assert.ok(providers.includes('ollama:{name:"Ollama Cloud",kind:"openai",baseUrl:"https://ollama.com/v1",model:"gemma4:31b"}'));
+ assert.ok(server.includes('providers.list()'));
+ assert.ok(html.includes('id="providerSettings"'));
+ assert.ok(js.includes('api("providers/"+id+"/models"'));
+});
