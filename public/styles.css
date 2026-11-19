@@ -332,3 +332,25 @@ button:active{transform:scale(.97)}
 .provider-market-card .catalog-size{font-size:8px;letter-spacing:.3px}
 .created-key-actions{flex-wrap:wrap}
 @media(max-width:760px){.chat-model-controls{width:100%}.chat-model-controls select{flex:1;min-width:0;max-width:none}#companionMode{flex-basis:100%}.usage-bar-row{grid-template-columns:82px 1fr auto}.usage-chart-heading{align-items:flex-start;flex-direction:column}}
+\n
+/* OpenRouter-inspired API key management */
+.api-key-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 0;border-bottom:1px solid #1d292e;margin-bottom:12px}
+.api-key-toolbar>div{display:grid;gap:5px}.api-key-toolbar strong{font-size:13px;color:#eef4f3}.api-key-toolbar span{font-size:11px;color:#839095}
+.api-key-list{display:grid;gap:9px}.api-key-list .provider-row{border:1px solid #202d32;background:#080f12;border-radius:9px;padding:14px}
+.created-key-panel{margin:14px 0;padding:16px;border:1px solid #5a7729;background:#10190b;border-radius:10px}
+.created-key-label{font-size:12px;color:#d5ff83;margin-bottom:10px}
+.created-key-value{width:100%;font-family:ui-monospace,monospace;letter-spacing:.3px;background:#070d0f;border:1px solid #34432b;color:#eaf5df;padding:12px;border-radius:7px}
+.created-key-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.api-key-modal[hidden]{display:none}.api-key-modal{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px}
+.api-key-modal-backdrop{position:absolute;inset:0;background:#000b;backdrop-filter:blur(7px)}
+.api-key-modal-panel{position:relative;width:min(100%,460px);padding:25px;border:1px solid #29383d;border-radius:15px;background:#0b1114;box-shadow:0 25px 90px #000a;animation:alloModalIn .22s ease-out}
+.api-key-modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.api-key-modal-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:11px;background:#caff2920;color:#caff29;font-size:21px}
+.api-key-modal-panel h2{font-size:21px;margin:0 0 8px;color:#f3f6f4}
+.api-key-modal-panel p{font-size:12px;color:#89969a;line-height:1.6;margin:0 0 22px}
+.api-key-modal-panel label{display:block;font-size:11px;color:#c6d0d0;margin-bottom:8px}
+.api-key-modal-panel input{width:100%;box-sizing:border-box;padding:13px 14px;background:#070d10;border:1px solid #2a393e;border-radius:8px;color:#f4f7f5;outline:0}
+.api-key-modal-panel input:focus{border-color:#caff29;box-shadow:0 0 0 3px #caff2918}
+.api-key-modal-foot{display:flex;justify-content:flex-end;gap:9px;margin-top:24px}
+@keyframes alloModalIn{from{opacity:0;transform:translateY(9px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:540px){.api-key-toolbar{align-items:flex-start;flex-direction:column}.api-key-toolbar button{width:100%}.api-key-modal-panel{padding:20px}.api-key-modal-foot button{flex:1}}
