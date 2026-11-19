@@ -52,9 +52,8 @@
     </section>
     <section class="view page-view" id="runningView"><div class="page-heading"><div><div class="eyebrow">ACTIVE PROCESSES</div><h1>Running models</h1><p>Models currently loaded in memory on your server.</p></div><button class="secondary-button" id="runningRefresh">Refresh ↻</button></div><div class="table-wrap"><table><thead><tr><th>MODEL</th><th>SIZE</th><th>PROCESSOR</th><th>UNTIL</th><th></th></tr></thead><tbody id="runningTable"><tr><td colspan="5" class="table-empty">Loading…</td></tr></tbody></table></div></section>
     <section class="view page-view" id="exploreView">
-      <div class="page-heading"><div><div class="eyebrow">DISCOVER OPEN MODELS</div><h1>Discover AI providers</h1><p>Browse connected AI providers, free model access and your installed local models.</p></div></div>
-      <div class="toolbar-row"><input id="catalogSearch" placeholder="Search providers and model families…"><select id="catalogFilter"><option value="all">All providers</option><option value="small">Free tiers & free models</option></select></div>
-      <div class="catalog-grid" id="catalogGrid"></div>
+      <div class="page-heading"><div><div class="eyebrow">DISCOVER OPEN MODELS</div><h1>Explore AI models</h1><p>Discover real model names, publishers, model logos, downloads and provider connections.</p></div></div>
+      <div class="toolbar-row"><input id="catalogSearch" placeholder="Search model name, publisher or family…"><select id="catalogFilter"><option value="all">All models</option><option value="small">Small models</option><option value="code">Coding models</option></select><button class="secondary-button" id="refreshCatalog" type="button">Refresh models</button></div><div class="catalog-status" id="catalogStatus">Loading live model catalogue…</div><div class="catalog-grid" id="catalogGrid"></div><h2 class="catalog-subheading">AI provider directory</h2><div class="catalog-grid" id="providerCatalogGrid"></div>
     </section>
     <section class="view page-view" id="compareView">
       <div class="page-heading"><div><div class="eyebrow">SIDE-BY-SIDE EVALUATION</div><h1>Compare models</h1><p>Send the same prompt to two installed models and compare their outputs.</p></div></div>
