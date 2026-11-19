@@ -30,6 +30,19 @@ const PROVIDERS = {
   hyperbolic:{name:"Hyperbolic",kind:"openai",baseUrl:"https://api.hyperbolic.xyz/v1",model:"meta-llama/Meta-Llama-3.1-70B-Instruct"},
   deepinfra:{name:"DeepInfra",kind:"openai",baseUrl:"https://api.deepinfra.com/v1/openai",model:"meta-llama/Meta-Llama-3.1-70B-Instruct"},
   minimax:{name:"MiniMax",kind:"openai",baseUrl:"https://api.minimax.io/v1",model:"MiniMax-Text-01"},
+  huggingface:{name:"Hugging Face Inference",kind:"openai",baseUrl:"https://router.huggingface.co/v1",model:"deepseek-ai/DeepSeek-R1"},
+  volcengine:{name:"ByteDance Volcengine Ark",kind:"openai",baseUrl:"https://ark.cn-beijing.volces.com/api/v3",model:"doubao-seed-1-6-250615"},
+  hunyuan:{name:"Tencent Hunyuan",kind:"openai",baseUrl:"https://api.hunyuan.cloud.tencent.com/v1",model:"hunyuan-turbos-latest"},
+  qianfan:{name:"Baidu Qianfan",kind:"openai",baseUrl:"https://qianfan.baidubce.com/v2",model:"ernie-4.5-turbo-128k"},
+  mimo:{name:"Xiaomi MiMo",kind:"openai",baseUrl:"https://api.xiaomimimo.com/v1",model:"mimo-v2-flash"},
+  stepfun:{name:"StepFun",kind:"openai",baseUrl:"https://api.stepfun.ai/v1",model:"step-3.5-flash"},
+  baichuan:{name:"Baichuan AI",kind:"openai",baseUrl:"https://api.baichuan-ai.com/v1",model:"Baichuan4"},
+  modelscope:{name:"ModelScope",kind:"openai",baseUrl:"https://api-inference.modelscope.cn/v1",model:"Qwen/Qwen2.5-72B-Instruct"},
+  nebius:{name:"Nebius AI Studio",kind:"openai",baseUrl:"https://api.studio.nebius.com/v1",model:"meta-llama/Meta-Llama-3.1-70B-Instruct"},
+  arcee:{name:"Arcee AI",kind:"openai",baseUrl:"https://api.arcee.ai/api/v1",model:"afm-4.5b"},
+  atlascloud:{name:"AtlasCloud",kind:"openai",baseUrl:"https://api.atlascloud.ai/v1",model:"deepseek-ai/DeepSeek-V3"},
+  longcat:{name:"Meituan LongCat",kind:"openai",baseUrl:"https://api.longcat.chat/openai/v1",model:"LongCat-Flash-Chat"},
+  requesty:{name:"Requesty",kind:"openai",baseUrl:"https://router.requesty.ai/v1",model:"openai/gpt-4o-mini"},
   custom:{name:"Custom OpenAI-compatible",kind:"openai",baseUrl:"",model:""}
 };
 
