@@ -203,3 +203,5 @@ test("OpenAI-compatible API lists configured cloud models and routes cloud chat 
 });
 
 test("Allo includes additional documented inference providers from the wider model ecosystem",()=>{const providers=read("providers.js"),html=read("public/index.html");for(const id of ["huggingface","volcengine","hunyuan","qianfan","mimo","stepfun","baichuan","modelscope","nebius","arcee","atlascloud","longcat","requesty"])assert.ok(providers.includes(id)&&html.includes('value="'+id+'"'),"missing provider "+id);});
+
+test("Explore page renders live model catalogue cards with model name, publisher logo and model details",()=>{const app=read("public/app.js"),html=read("public/index.html"),css=read("public/styles.css");assert.ok(app.includes("loadModelCatalog"));assert.ok(app.includes("modelAvatar"));assert.ok(app.includes("huggingface.co/avatars/"));assert.ok(app.includes("model.name"));assert.ok(html.includes('id="catalogGrid"'));assert.ok(html.includes('id="providerCatalogGrid"'));assert.ok(css.includes(".model-avatar"));});
