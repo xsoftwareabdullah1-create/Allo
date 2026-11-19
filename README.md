@@ -14,7 +14,7 @@
 
 Allo manages its own model library, downloads model files from Hugging Face, stores them locally, starts and stops inference processes, and serves chat through its own API. It does **not** connect to or require an Ollama server.
 
-The inference executable is built into the Allo Docker image from the open-source [llama.cpp](https://github.com/ggml-org/llama.cpp) project. The Models page can also create lightweight aliases of installed models; aliases share the source GGUF file instead of duplicating its disk usage. Allo owns the application layer: model downloads, local storage, process lifecycle, authentication, workspace and APIs. It does not claim to independently reimplement transformer inference mathematics from scratch.
+The current production inference executable is built into the Allo Docker image from [llama.cpp](https://github.com/ggml-org/llama.cpp). The repository now also contains the first independent C/C++ engine ABI and CMake build/test target. That native library is an integration scaffold, not yet a replacement inference implementation. The Models page can create lightweight aliases of installed models; aliases share the source GGUF file instead of duplicating its disk usage.
 
 ## Features
 - Local GGUF model library with persistent storage.
@@ -119,7 +119,7 @@ Browser / SDK -> Allo Node.js application
                               +-- local GGUF files and CPU inference
 ```
 
-Allo has no Ollama dependency. llama.cpp is the bundled inference engine; Allo owns model management and orchestration.
+Allo has no Ollama dependency. The existing production backend is llama.cpp; the independent Allo Native Engine ABI is being developed as the path toward replaceable inference backends.
 
 ## Current limitations
 - The bundled Docker runtime is CPU-first; GPU acceleration is not configured in this initial build.
@@ -128,7 +128,7 @@ Allo has no Ollama dependency. llama.cpp is the bundled inference engine; Allo o
 - The currently implemented inference path supports text chat and OpenAI-compatible chat completions. Embeddings, vision, model publishing and custom Modelfiles are not implemented yet.
 - Public/private gated Hugging Face repository authentication is not implemented.
 - Authentication is single-user Basic authentication, not multi-user accounts.
-- The project does not claim to have authored the underlying inference engine from scratch; llama.cpp is included under its upstream license.
+- The independent C/C++ engine ABI is at `engine/`; inference execution is not implemented in that library yet. The current production backend remains llama.cpp, included under its upstream license.
 
 ## Development
 ```bash
@@ -156,4 +156,4 @@ Set `ALLO_ENCRYPTION_KEY` in `.env` before saving cloud credentials. Generate a 
 
 ### Ollama Cloud
 
-Allo includes **Ollama Cloud** as an OpenAI-compatible provider. In Settings, select Ollama Cloud, add an API key created at https://ollama.com/settings/keys, then discover available models. The connection uses `https://ollama.com/v1` and Bearer authentication. Ollama Cloud usage is subject to the user's Ollama account and plan. This integration connects to Ollama's hosted API; it does not bundle or run the Ollama server.
+Allo is developed as an independent platform and does not require or integrate an Ollama server.
