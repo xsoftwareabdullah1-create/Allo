@@ -117,7 +117,7 @@ test("Allo exposes expanded provider discovery and billing controls", () => {
   const server = read("server.js");
   const html = read("public/index.html");
   const js = read("public/app.js");
-  for (const id of ["cohere","nvidia","huggingface","qwen","kimi","zai","siliconflow","novita","inference","bedrock","cloudflare","vercel","sambanova","hyperbolic","deepinfra","minimax"]) assert.ok(providers.includes(id), "missing provider " + id);
+  for (const id of ["cohere","nvidia","qwen","kimi","zai","siliconflow","novita","inference","bedrock","cloudflare","vercel","sambanova","hyperbolic","deepinfra","minimax"]) assert.ok(providers.includes(id), "missing provider " + id);\n  assert.ok(!providers.includes("huggingface:{"), "Hugging Face must not be listed as a cloud provider");
   for (const token of ["async models(id,overrides={})","inputPricePerMillion","outputPricePerMillion","estimatedCostUsd","monthlyBudgetUsd"]) assert.ok(providers.includes(token));
   assert.ok(server.includes('app.get("/api/providers/:id/models"'));
   assert.ok(server.includes('app.get("/api/billing"'));
@@ -127,15 +127,14 @@ test("Allo exposes expanded provider discovery and billing controls", () => {
   assert.ok(js.includes('api("providers/"+id+"/models",{method:"POST"'));
 });
 
-test("Explore models uses a live Hugging Face GGUF catalogue instead of only a fixed list", () => {
-  const server = read("server.js");
+test("Explore view is a provider directory and no longer exposes Hugging Face catalog import UI", () => {
+  const html = read("public/index.html");
   const js = read("public/app.js");
-  assert.ok(server.includes('app.get("/api/catalog"'));
-  assert.ok(server.includes('filter: "gguf"'));
-  assert.ok(server.includes('https://huggingface.co/api/models?'));
-  assert.ok(js.includes('api("catalog"'));
-  assert.ok(js.includes("Searching live Hugging Face GGUF models"));
-  assert.ok(js.includes("Download model"));
+  assert.ok(html.includes('id="exploreView"'));
+  assert.ok(js.includes("async function renderCatalog()"));
+  assert.ok(js.includes("providerData.filter"));
+  assert.ok(!html.includes('value="huggingface"'));
+  assert.ok(!html.includes("huggingface.co/models?library=gguf"));
 });
 
 
@@ -147,8 +146,8 @@ test("Settings exposes direct API keys and billing navigation and cache-busted l
  assert.ok(html.includes('data-target-section="billingPanel"'));
  assert.ok(html.includes('id="providerSettings"'));
  assert.ok(html.includes('id="billingPanel"'));
- assert.ok(html.includes("styles.css?v=20261118-light2"));
- assert.ok(html.includes("app.js?v=20261118-api-create3"));
+ assert.ok(html.includes("styles.css?v=20261119-companion3"));
+ assert.ok(html.includes("app.js?v=20261119-companion3"));
  assert.ok(app.includes("target.scrollIntoView"));
  assert.ok(css.includes("html,body,.app-shell,.main,#chatView,.view"));
 });
@@ -162,3 +161,15 @@ test("Provider discovery accepts unsaved API key and base URL from the settings 
 
 
 test("current cloud model aliases are documented in provider presets",()=>{const providers=read("providers.js"),ui=read("public/app.js");for(const id of ["gpt-6.2-astra","claude-opus-5-5","gemini-3.8-flash","deepseek-flash"])assert.ok(providers.includes(id)&&ui.includes(id),"missing current model "+id);});
+
+test("Allo companion modes, usage graph, API key export and logo are present",()=>{
+ const html=read("public/index.html"),js=read("public/app.js"),css=read("public/styles.css");
+ for(const mode of ["general","reasoning","coding","research","creative","study","concise"])assert.ok(html.includes('value="'+mode+'"'));
+ assert.ok(js.includes("companionInstructions"));
+ assert.ok(html.includes('id="usageChart"'));
+ assert.ok(js.includes('className="usage-bar-row"'));
+ assert.ok(js.includes('Export .txt'));
+ assert.ok(js.includes('allo-api-key-'));
+ assert.ok(html.includes('<svg viewBox="0 0 40 40">'));
+ assert.ok(css.includes(".usage-chart"));
+});
