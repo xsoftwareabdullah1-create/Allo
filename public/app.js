@@ -85,30 +85,64 @@ const featuredCatalog = [
  {repo:"bartowski/TinyLlama-1.1B-Chat-v1.0-GGUF",family:"TinyLlama",task:"small",size:"1.1B",description:"Compact chat model."}
 ];
 let catalogRequest = 0;
+function modelAvatar(model){
+ const author=String(model.author||"").trim();
+ const wrap=document.createElement("div");wrap.className="model-avatar";
+ if(author){const img=document.createElement("img");img.alt=author+" logo";img.loading="lazy";img.src="https://huggingface.co/avatars/"+encodeURIComponent(author)+".png";img.onerror=()=>{img.remove();wrap.textContent=(author||model.name||"AI").slice(0,2).toUpperCase();};wrap.append(img);}
+ else wrap.textContent=String(model.name||"AI").slice(0,2).toUpperCase();
+ return wrap;
+}
+function renderModelCard(model){
+ const card=document.createElement("article");card.className="catalog-card model-market-card";
+ const top=document.createElement("div");top.className="model-card-heading";top.append(modelAvatar(model));
+ const identity=document.createElement("div");identity.className="model-identity";
+ const title=document.createElement("h3");title.textContent=model.name||model.repo.split("/").pop();
+ const publisher=document.createElement("div");publisher.className="model-publisher";publisher.textContent=model.author||"Community";
+ identity.append(title,publisher);top.append(identity);
+ const task=document.createElement("span");task.className="catalog-size";task.textContent=model.task==="chat"?"GGUF · CHAT":(model.task||"GGUF").toUpperCase();
+ const repo=document.createElement("div");repo.className="model-repo";repo.textContent=model.repo;
+ const meta=document.createElement("div");meta.className="model-meta";meta.textContent=(Number(model.downloads||0).toLocaleString()+" downloads · "+Number(model.likes||0).toLocaleString()+" likes");
+ const actions=document.createElement("div");actions.className="model-actions";
+ const open=document.createElement("a");open.className="secondary-button";open.href="https://huggingface.co/"+model.repo;open.target="_blank";open.rel="noreferrer";open.textContent="Model details ↗";
+ actions.append(open);card.append(top,task,repo,meta,actions);return card;
+}
+async function loadModelCatalog(){
+ const root=$("catalogGrid"),status=$("catalogStatus");if(!root)return;
+ const request=++catalogRequest,q=($("catalogSearch").value||"").trim(),filter=$("catalogFilter").value;
+ root.innerHTML="";status.textContent="Loading models from the live Hugging Face GGUF catalogue…";
+ try{
+  const params=new URLSearchParams({limit:"40"});if(q)params.set("q",q);
+  const response=await fetch("/api/catalog?"+params.toString());const data=await response.json();
+  if(request!==catalogRequest)return;if(!response.ok)throw new Error(data.error||"Model catalogue unavailable");
+  let models=Array.isArray(data.models)?data.models:[];
+  if(filter==="small")models=models.filter(m=>/tiny|smol|0\.5b|1b|1\.5b|2b|3b/i.test(m.repo));
+  if(filter==="code")models=models.filter(m=>/coder|code|starcoder|codegemma|deepseek-coder/i.test(m.repo));
+  if(!models.length){status.textContent="No models match this search. Try another model name or publisher.";return;}
+  models.forEach(m=>root.append(renderModelCard(m)));
+  status.textContent="Showing "+models.length+" live GGUF model repositories · sorted by downloads · Source: Hugging Face";
+ }catch(error){if(request!==catalogRequest)return;status.textContent=error.message;root.innerHTML="";}
+}
 async function renderCatalog(){
- const root=$("catalogGrid");if(!root)return;
+ const root=$("providerCatalogGrid");if(!root)return;
  const q=($("catalogSearch").value||"").trim().toLowerCase();
- const freeOnly=$("catalogFilter").value==="small";
- const providers=providerData.filter(p=>(!q||(p.name+" "+p.id+" "+(p.model||"")).toLowerCase().includes(q))&&(!freeOnly||["google","groq","openrouter","cloudflare","nvidia","cohere","sambanova","zai"].includes(p.id)));
+ const providers=providerData.filter(p=>(!q||(p.name+" "+p.id+" "+(p.model||"")).toLowerCase().includes(q)));
  root.innerHTML="";
- if(!providers.length){root.innerHTML='<div class="loading-card">No matching providers. Connect one in API Keys to use its models.</div>';return;}
  providers.forEach(p=>{
-  const free=["google","groq","openrouter","cloudflare","nvidia","cohere","sambanova","zai"].includes(p.id);
   const card=document.createElement("article");card.className="catalog-card provider-market-card";
   const top=document.createElement("div");top.className="catalog-top";
-  const symbol=document.createElement("span");symbol.className="model-symbol";symbol.textContent="✳";
-  const tier=document.createElement("span");tier.className="catalog-size "+(free?"free-tier":"paid-tier");tier.textContent=free?"FREE TIER / FREE MODELS":"PAID / USAGE BASED";top.append(symbol,tier);
+  const symbol=document.createElement("span");symbol.className="model-symbol";symbol.textContent=p.name.slice(0,2).toUpperCase();
+  const tier=document.createElement("span");tier.className="catalog-size";tier.textContent=p.configured?"CONNECTED":"API PROVIDER";top.append(symbol,tier);
   const title=document.createElement("h3");title.textContent=p.name;
   const meta=document.createElement("div");meta.className="model-meta";meta.textContent=p.configured?"Connected · "+(p.model||"Model not selected"):"Not connected";
-  const desc=document.createElement("p");desc.textContent=free?"Offers a free tier, trial or free model selection. Limits and eligibility are controlled by the provider.":"Paid API access or provider-specific credits may apply.";
   const button=document.createElement("button");button.className=p.configured?"secondary-button":"primary-button";button.textContent=p.configured?"Manage connection":"Connect provider";
   button.onclick=()=>{$("providerConfigSelect").value=p.id;$("providerConfigSelect").onchange();showView("settings");$("providerSettings").scrollIntoView({behavior:"smooth"});};
-  card.append(top,title,meta,desc,button);root.append(card);
+  card.append(top,title,meta,button);root.append(card);
  });
 }
 let catalogSearchTimer;
-$("catalogSearch").addEventListener("input",()=>{clearTimeout(catalogSearchTimer);catalogSearchTimer=setTimeout(renderCatalog,350);});
-$("catalogFilter").addEventListener("change",renderCatalog);
+$("catalogSearch").addEventListener("input",()=>{clearTimeout(catalogSearchTimer);catalogSearchTimer=setTimeout(()=>{loadModelCatalog();renderCatalog();},350);});
+$("catalogFilter").addEventListener("change",loadModelCatalog);
+$("refreshCatalog").addEventListener("click",()=>{loadModelCatalog();renderCatalog();});
 function populateCompare(){const options=state.models.map(m=>'<option value="'+escapeHtml(m.name)+'">'+escapeHtml(m.name)+'</option>').join("");$("compareA").innerHTML=options||'<option value="">No installed models</option>';$("compareB").innerHTML=options||'<option value="">No installed models</option>';if(state.models.length>1)$("compareB").selectedIndex=1;}
 async function runOne(model,prompt){const response=await api("chat",{method:"POST",body:JSON.stringify({model,messages:[{role:"user",content:prompt}],stream:true})});const reader=response.body.getReader(),decoder=new TextDecoder();let buffer="",result="";while(true){const {done,value}=await reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});const lines=buffer.split("\n");buffer=lines.pop();for(const line of lines){if(!line.trim())continue;const d=JSON.parse(line);result+=d.message?.content||"";}}return result;}
 $("compareRun").onclick=async()=>{const a=$("compareA").value,b=$("compareB").value,p=$("comparePrompt").value.trim();if(!a||!b||!p)return toast("Choose two models and enter a prompt.");$("compareRun").disabled=true;$("compareResults").innerHTML='<div class="compare-empty">Generating both responses…</div>';try{const ra=await runOne(a,p);const rb=await runOne(b,p);$("compareResults").innerHTML="";[[a,ra],[b,rb]].forEach(([name,answer])=>{const card=document.createElement("article");card.className="compare-card";const h=document.createElement("h3");h.textContent=name;const body=document.createElement("div");body.className="compare-answer";body.textContent=answer;card.append(h,body);$("compareResults").append(card);});}catch(e){$("compareResults").textContent=e.message;}finally{$("compareRun").disabled=false;}};
