@@ -201,3 +201,5 @@ test("OpenAI-compatible API lists configured cloud models and routes cloud chat 
  assert.ok(server.includes('chat.completion'));
  assert.ok(server.includes('Cloud provider streaming is not enabled'));
 });
+
+test("Allo includes additional documented inference providers from the wider model ecosystem",()=>{const providers=read("providers.js"),html=read("public/index.html");for(const id of ["huggingface","volcengine","hunyuan","qianfan","mimo","stepfun","baichuan","modelscope","nebius","arcee","atlascloud","longcat","requesty"])assert.ok(providers.includes(id)&&html.includes('value="'+id+'"'),"missing provider "+id);});
