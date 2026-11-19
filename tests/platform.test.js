@@ -91,7 +91,9 @@ test("runtime reports a clear missing llama-server diagnostic", () => {
   assert.ok(runtime.includes("llama-server executable not found"));
   assert.ok(runtime.includes("ALLO_LLAMACPP_BIN"));
   assert.ok(server.includes("runtime.binaryStatus()"));
-  assert.ok(server.includes("binary.available ? 200 : 503"));
+  assert.ok(server.includes('app.get("/health"'));
+  assert.ok(server.includes("localInferenceReady: binary.available"));
+  assert.ok(server.includes("res.status(200).json({ ok: true, app: \"Allo\""));
 });
 
 test("universal provider gateway includes major cloud providers and encrypted credential storage", () => {
