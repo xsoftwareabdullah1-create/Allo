@@ -70,3 +70,8 @@ In Settings → API access, enter a key name and choose **Create API key**. Copy
 ## Provider model discovery
 
 Save the provider API key first, then select **Discover available models**. Results are rendered in a normal select control for mobile. Selecting a model fills the Model ID field. Availability depends on the provider account, endpoint region, API permissions and provider's model-list endpoint. If a provider does not expose model listing, enter a documented model ID manually. Live provider model lists are authoritative; defaults are suggestions only.
+
+
+## Cloud provider API
+
+Configure a cloud provider in Allo Settings first. `GET /v1/models` then includes configured cloud models using IDs in the form `provider-id/provider-model-id`. Use that exact ID with `POST /v1/chat/completions` and an Allo API key as a Bearer token. Cloud chat currently returns non-streaming OpenAI-compatible JSON; omit `stream` or set it to `false`. Streaming remains supported for local GGUF models.
