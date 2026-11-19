@@ -146,6 +146,7 @@ test("Settings exposes direct API keys and billing navigation and cache-busted l
  assert.ok(html.includes('data-target-section="providerSettings"'));
  assert.ok(html.includes('data-target-section="billingPanel"'));
  assert.ok(html.includes('id="providerSettings"'));
+ assert.ok(html.includes('<option value="ollama">Ollama Cloud</option>'));
  assert.ok(html.includes('id="billingPanel"'));
  assert.ok(html.includes("styles.css?v=20261119-encryption-ui1"));
  assert.ok(html.includes("app.js?v=20261119-encryption-ui1"));
