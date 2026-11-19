@@ -117,7 +117,8 @@ test("Allo exposes expanded provider discovery and billing controls", () => {
   const server = read("server.js");
   const html = read("public/index.html");
   const js = read("public/app.js");
-  for (const id of ["cohere","nvidia","qwen","kimi","zai","siliconflow","novita","inference","bedrock","cloudflare","vercel","sambanova","hyperbolic","deepinfra","minimax"]) assert.ok(providers.includes(id), "missing provider " + id);\n  assert.ok(!providers.includes("huggingface:{"), "Hugging Face must not be listed as a cloud provider");
+  for (const id of ["cohere","nvidia","qwen","kimi","zai","siliconflow","novita","inference","bedrock","cloudflare","vercel","sambanova","hyperbolic","deepinfra","minimax"]) assert.ok(providers.includes(id), "missing provider " + id);
+  assert.ok(!providers.includes("huggingface:{"), "Hugging Face must not be listed as a cloud provider");
   for (const token of ["async models(id,overrides={})","inputPricePerMillion","outputPricePerMillion","estimatedCostUsd","monthlyBudgetUsd"]) assert.ok(providers.includes(token));
   assert.ok(server.includes('app.get("/api/providers/:id/models"'));
   assert.ok(server.includes('app.get("/api/billing"'));
