@@ -37,17 +37,30 @@ class ProviderHub {
   constructor(dataDir) {
     this.file=path.join(dataDir,"providers.enc");
     this.usageFile=path.join(dataDir,"provider-usage.json");
-    this.key=process.env.ALLO_ENCRYPTION_KEY?crypto.createHash("sha256").update(process.env.ALLO_ENCRYPTION_KEY).digest():null;
+    this.key=null;
+    this.keyFile=path.join(dataDir,"provider-encryption.key");
     this.configs={};this.usage={requests:0,inputTokens:0,outputTokens:0,providers:{},updatedAt:null};
   }
   async init(){
+    await fs.mkdir(path.dirname(this.file),{recursive:true});
     try{this.usage=JSON.parse(await fs.readFile(this.usageFile,"utf8"));}catch(e){if(e.code!=="ENOENT")throw e;}
-    if(!this.key)return;
+    let masterSecret=process.env.ALLO_ENCRYPTION_KEY;
+    if(!masterSecret){
+      try{masterSecret=(await fs.readFile(this.keyFile,"utf8")).trim();}
+      catch(e){
+        if(e.code!=="ENOENT")throw e;
+        masterSecret=crypto.randomBytes(32).toString("hex");
+        try{await fs.writeFile(this.keyFile,masterSecret,{flag:"wx",mode:0o600});}
+        catch(writeError){if(writeError.code!=="EEXIST")throw writeError;masterSecret=(await fs.readFile(this.keyFile,"utf8")).trim();}
+      }
+    }
+    if(!masterSecret||masterSecret.length<32)throw new Error("ALLO_ENCRYPTION_KEY must contain at least 32 characters.");
+    this.key=crypto.createHash("sha256").update(masterSecret).digest();
     try{const saved=JSON.parse(await fs.readFile(this.file,"utf8"));const d=crypto.createDecipheriv("aes-256-gcm",this.key,Buffer.from(saved.iv,"base64"));d.setAuthTag(Buffer.from(saved.tag,"base64"));this.configs=JSON.parse(Buffer.concat([d.update(Buffer.from(saved.data,"base64")),d.final()]).toString("utf8"));}
     catch(e){if(e.code!=="ENOENT")throw new Error("Could not decrypt provider settings. Check ALLO_ENCRYPTION_KEY.");}
   }
   async save(){
-    if(!this.key){const e=new Error("Set ALLO_ENCRYPTION_KEY on the server before saving provider settings.");e.status=503;throw e;}
+    if(!this.key){const e=new Error("Provider encryption is not initialized. Restart Allo and check its persistent data directory.");e.status=503;throw e;}
     await fs.mkdir(path.dirname(this.file),{recursive:true});const iv=crypto.randomBytes(12),c=crypto.createCipheriv("aes-256-gcm",this.key,iv);
     const data=Buffer.concat([c.update(JSON.stringify(this.configs),"utf8"),c.final()]);
     const tmp=this.file+"."+process.pid+".tmp";
