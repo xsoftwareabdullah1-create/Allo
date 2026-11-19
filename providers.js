@@ -30,7 +30,6 @@ const PROVIDERS = {
   hyperbolic:{name:"Hyperbolic",kind:"openai",baseUrl:"https://api.hyperbolic.xyz/v1",model:"meta-llama/Meta-Llama-3.1-70B-Instruct"},
   deepinfra:{name:"DeepInfra",kind:"openai",baseUrl:"https://api.deepinfra.com/v1/openai",model:"meta-llama/Meta-Llama-3.1-70B-Instruct"},
   minimax:{name:"MiniMax",kind:"openai",baseUrl:"https://api.minimax.io/v1",model:"MiniMax-Text-01"},
-  ollama:{name:"Ollama Cloud",kind:"openai",baseUrl:"https://ollama.com/v1",model:"gemma4:31b"},
   custom:{name:"Custom OpenAI-compatible",kind:"openai",baseUrl:"",model:""}
 };
 
