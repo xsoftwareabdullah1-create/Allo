@@ -17,7 +17,6 @@ const PROVIDERS = {
   perplexity:{name:"Perplexity",kind:"openai",baseUrl:"https://api.perplexity.ai",model:"sonar"},
   cohere:{name:"Cohere",kind:"openai",baseUrl:"https://api.cohere.com/compatibility/v1",model:"command-a-03-2025"},
   nvidia:{name:"NVIDIA NIM",kind:"openai",baseUrl:"https://integrate.api.nvidia.com/v1",model:"nvidia/llama-3.1-nemotron-70b-instruct"},
-  huggingface:{name:"Hugging Face Inference",kind:"openai",baseUrl:"https://router.huggingface.co/v1",model:"Qwen/Qwen2.5-7B-Instruct"},
   qwen:{name:"Qwen / Alibaba DashScope",kind:"openai",baseUrl:"https://dashscope-intl.aliyuncs.com/compatible-mode/v1",model:"qwen4-max"},
   kimi:{name:"Moonshot Kimi",kind:"openai",baseUrl:"https://api.moonshot.ai/v1",model:"moonshot-v1-8k"},
   zai:{name:"Z.ai / GLM",kind:"openai",baseUrl:"https://api.z.ai/api/paas/v4",model:"glm-5.3"},
