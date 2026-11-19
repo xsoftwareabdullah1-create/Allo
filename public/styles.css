@@ -271,3 +271,37 @@ body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,
 }
 
 .market-provider-strip button{border:1px solid #1d2a2f;border-radius:7px;background:#090f12;color:#aeb9bd;padding:10px 13px;font:10px inherit;cursor:pointer}.market-provider-strip button:hover{border-color:#829f23;color:var(--accent)}
+
+/* OpenRouter-like motion system and API-key copy controls */
+@keyframes alloFadeUp{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:translateY(0)}}
+@keyframes alloFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes alloShimmer{0%{background-position:180% 0}100%{background-position:-80% 0}}
+@keyframes alloPulse{0%,100%{opacity:.55;transform:scale(.92)}50%{opacity:1;transform:scale(1)}}
+.view.active{animation:alloFadeIn .28s ease both}
+.market-topline,.market-search,.market-tabs,.market-chips,.market-hero,.market-section-head,.market-model-grid,.market-provider-strip,.market-bottom-note{animation:alloFadeUp .55s cubic-bezier(.2,.7,.2,1) both}
+.market-search{animation-delay:.04s}.market-tabs{animation-delay:.08s}.market-chips{animation-delay:.12s}.market-hero{animation-delay:.16s}.market-section-head{animation-delay:.22s}.market-model-grid{animation-delay:.27s}.provider-head{animation-delay:.32s}.market-provider-strip{animation-delay:.36s}
+.market-primary,.market-secondary,.market-chips button,.market-section-head>button,.market-dashboard-link,.market-model-card button,.market-provider-strip button,.nav-item,.icon-button,.primary-button,.secondary-button,.send-button,.copy-icon-button,.copy-key-button{transition:transform .2s ease,background .2s ease,border-color .2s ease,color .2s ease,box-shadow .2s ease,opacity .2s ease}
+.market-primary:hover,.copy-key-button:hover{transform:translateY(-2px);box-shadow:0 7px 22px #c7ff1930}
+.market-secondary:hover,.market-chips button:hover,.market-model-card button:hover,.market-provider-strip button:hover,.secondary-button:hover{transform:translateY(-1px);border-color:#829f23}
+.market-model-card,.settings-card,.install-panel,.catalog-card,.model-card,.prompt-card,.compare-card,.billing-stats>div{transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+.market-model-card:hover,.settings-card:hover,.install-panel:hover,.catalog-card:hover,.model-card:hover,.prompt-card:hover,.compare-card:hover{transform:translateY(-3px);border-color:#455b29;box-shadow:0 12px 32px #0005}
+.market-live i,.connection i.online{animation:alloPulse 2s ease-in-out infinite}
+.market-model-card.skeleton{background:linear-gradient(100deg,#0a1114 20%,#182226 42%,#0a1114 65%);background-size:220% 100%;animation:alloShimmer 1.8s linear infinite}
+.market-search:focus-within{border-color:#9fc51b;box-shadow:0 0 0 3px #c7ff1910,0 8px 26px #0003;transition:box-shadow .2s,border-color .2s}
+button:active{transform:scale(.97)}
+.api-key-row{align-items:center;gap:12px;padding:12px 0}
+.api-key-row>span{min-width:0;overflow-wrap:anywhere;color:#dce5e7;font-size:12px}
+.api-key-actions,.created-key-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.copy-icon-button{width:34px;height:34px;border:1px solid #304047;border-radius:8px;background:#111b1f;color:#dce8e8;font-size:18px;cursor:pointer}
+.copy-icon-button:hover{border-color:var(--accent);color:var(--accent);background:#182116}
+#createdApiKey{display:grid;gap:10px;padding:14px;margin-top:14px;border:1px solid #43552a;border-radius:10px;background:linear-gradient(135deg,#101910,#0b1214);color:#e8f3dc;animation:alloFadeUp .28s ease both}
+.created-key-label{font-size:11px;line-height:1.6;color:#c7d5b7}
+.created-key-value{width:100%;min-width:0;padding:12px;border:1px solid #34443a;border-radius:7px;background:#060c09;color:#d8f7ad;font:12px ui-monospace,SFMono-Regular,monospace;letter-spacing:.2px}
+.created-key-actions{justify-content:flex-end}
+.copy-key-button{border:1px solid var(--accent);border-radius:7px;background:var(--accent);color:#111800;padding:9px 13px;font-size:11px;font-weight:750;cursor:pointer}
+.copy-key-button span{font-size:15px;margin-right:6px}
+.toast.show{animation:alloFadeUp .22s ease both}
+.model-modal:not([hidden]){animation:alloFadeIn .2s ease both}
+.model-modal-panel{animation:alloFadeUp .25s ease both}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+@media(max-width:760px){.api-key-row{align-items:flex-start}.api-key-actions{gap:6px}.copy-icon-button{width:32px;height:32px}.created-key-actions{justify-content:stretch}.created-key-actions button{flex:1}}
