@@ -146,8 +146,8 @@ test("Settings exposes direct API keys and billing navigation and cache-busted l
  assert.ok(html.includes('data-target-section="billingPanel"'));
  assert.ok(html.includes('id="providerSettings"'));
  assert.ok(html.includes('id="billingPanel"'));
- assert.ok(html.includes("styles.css?v=20261119-companion3"));
- assert.ok(html.includes("app.js?v=20261119-companion3"));
+ assert.ok(html.includes("styles.css?v=20261119-encryption-ui1"));
+ assert.ok(html.includes("app.js?v=20261119-encryption-ui1"));
  assert.ok(app.includes("target.scrollIntoView"));
  assert.ok(css.includes("html,body,.app-shell,.main,#chatView,.view"));
 });
@@ -172,4 +172,21 @@ test("Allo companion modes, usage graph, API key export and logo are present",()
  assert.ok(js.includes('allo-api-key-'));
  assert.ok(html.includes('<svg viewBox="0 0 40 40">'));
  assert.ok(css.includes(".usage-chart"));
+});
+
+test("Provider encryption provisions a persistent key without requiring ALLO_ENCRYPTION_KEY",()=>{
+ const providers=read("providers.js"),server=read("server.js");
+ assert.ok(providers.includes('this.keyFile=path.join(dataDir,"provider-encryption.key")'));
+ assert.ok(providers.includes('crypto.randomBytes(32).toString("hex")'));
+ assert.ok(providers.includes('flag:"wx",mode:0o600'));
+ assert.ok(providers.includes('get encryptionReady(){return Boolean(this.key);}'));
+ assert.ok(server.includes("encryptionReady: providers.encryptionReady"));
+});
+test("API key management uses a dedicated modal with one-time secret controls",()=>{
+ const html=read("public/index.html"),js=read("public/app.js"),css=read("public/styles.css");
+ for(const id of ["apiKeyModal","openCreateApiKey","newApiKeyName","createApiKey","closeApiKeyModal"])assert.ok(html.includes('id="'+id+'"'));
+ assert.ok(js.includes('apiKeyModal.querySelector("[data-close-api-modal]")'));
+ assert.ok(js.includes("Copy API key"));
+ assert.ok(js.includes("Export .txt"));
+ assert.ok(css.includes(".api-key-modal-panel"));
 });
