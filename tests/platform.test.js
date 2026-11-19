@@ -191,3 +191,11 @@ test("API key management uses a dedicated modal with one-time secret controls",(
  assert.ok(js.includes("Export .txt"));
  assert.ok(css.includes(".api-key-modal-panel"));
 });
+
+test("OpenAI-compatible API lists configured cloud models and routes cloud chat requests",()=>{
+ const server=read("server.js");
+ assert.ok(server.includes('providers.list().filter(p => p.configured)'));
+ assert.ok(server.includes('providers.request(providerId,'));
+ assert.ok(server.includes('chat.completion'));
+ assert.ok(server.includes('Cloud provider streaming is not enabled'));
+});
