@@ -39,6 +39,19 @@ jobs:
       - name: Run test suite
         run: npm test
 
+  native-engine:
+    name: Build and test native C/C++ engine ABI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Configure native engine
+        run: cmake -S engine -B build/engine -DCMAKE_BUILD_TYPE=Release
+      - name: Build native engine
+        run: cmake --build build/engine --config Release --parallel 2
+      - name: Run native contract tests
+        run: ctest --test-dir build/engine --output-on-failure
+
   container-build:
     name: Build bundled runtime image
     runs-on: ubuntu-latest
