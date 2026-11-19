@@ -291,10 +291,24 @@ app.post("/api/push", (_req, res) => res.status(501).json({ error: "Registry pub
 app.post("/api/embed", (_req, res) => res.status(501).json({ error: "Embedding model mode is not enabled in this first native runtime release. It is on the runtime roadmap." }));
 app.post("/api/embeddings", (_req, res) => res.status(501).json({ error: "Embedding model mode is not enabled in this first native runtime release. It is on the runtime roadmap." }));
 
-app.get("/v1/models", (_req, res) => res.json({ object: "list", data: runtime.list().map(m => ({ id: m.name, object: "model", created: Math.floor(Date.parse(m.modified_at) / 1000), owned_by: "allo" })) }));
+app.get("/v1/models", (_req, res) => {
+  const local = runtime.list().map(m => ({ id: m.name, object: "model", created: Math.floor(Date.parse(m.modified_at) / 1000) || 0, owned_by: "allo-local" }));
+  const cloud = providers.list().filter(p => p.configured).map(p => ({ id: p.id + "/" + p.model, object: "model", created: Math.floor(Date.now()/1000), owned_by: p.id }));
+  res.json({ object: "list", data: [...local, ...cloud] });
+});
 app.post("/v1/chat/completions", async (req, res) => {
   try {
-    const upstream = await runtime.request(req.body?.model, "/v1/chat/completions", req.body);
+    const requestedModel = String(req.body?.model || "");
+    const separator = requestedModel.indexOf("/");
+    if (separator > 0) {
+      const providerId = requestedModel.slice(0, separator);
+      const configured = providers.list().find(p => p.id === providerId && p.configured);
+      if (!configured) return res.status(400).json({ error: { message: "Unknown or unconfigured provider model. Configure a provider in Allo Settings and use its provider/model ID from GET /v1/models.", type: "invalid_request_error" } });
+      if (req.body?.stream === true) return res.status(400).json({ error: { message: "Cloud provider streaming is not enabled in this Allo API release. Set stream:false or omit stream.", type: "invalid_request_error" } });
+      const result = await providers.request(providerId, Array.isArray(req.body?.messages) ? req.body.messages : [{ role: "user", content: String(req.body?.prompt || "") }], { temperature: req.body?.temperature, max_tokens: req.body?.max_tokens });
+      return res.json({ id: "chatcmpl-allo-" + crypto.randomUUID(), object: "chat.completion", created: Math.floor(Date.now()/1000), model: requestedModel, choices: [{ index: 0, message: result.message, finish_reason: "stop" }], usage: { prompt_tokens: result.billing.inputTokens, completion_tokens: result.billing.outputTokens, total_tokens: result.billing.inputTokens + result.billing.outputTokens } });
+    }
+    const upstream = await runtime.request(requestedModel, "/v1/chat/completions", req.body);
     res.status(upstream.status);
     const type = upstream.headers.get("content-type") || "application/json";
     res.setHeader("Content-Type", type);
