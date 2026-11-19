@@ -75,3 +75,7 @@ Save the provider API key first, then select **Discover available models**. Resu
 ## Cloud provider API
 
 Configure a cloud provider in Allo Settings first. `GET /v1/models` then includes configured cloud models using IDs in the form `provider-id/provider-model-id`. Use that exact ID with `POST /v1/chat/completions` and an Allo API key as a Bearer token. Cloud chat currently returns non-streaming OpenAI-compatible JSON; omit `stream` or set it to `false`. Streaming remains supported for local GGUF models.
+
+## Ollama Cloud provider
+
+Ollama Cloud can be connected from Settings → Providers. Select **Ollama Cloud**, paste an API key created at [Ollama API keys](https://ollama.com/settings/keys), then discover models or enter a supported cloud model ID. The preset uses the OpenAI-compatible endpoint `https://ollama.com/v1`, Bearer authentication, `GET /v1/models` and `POST /v1/chat/completions`. For example, `gemma4:31b` appears in Ollama's cloud API examples; model availability depends on the Ollama account and current cloud catalogue. Allo stores the key encrypted and routes chat through the existing provider gateway. An Ollama API key is separate from an Allo API key.
