@@ -45,11 +45,13 @@ PORT=3000
 ALLO_USERNAME=choose-a-username
 ALLO_PASSWORD=replace-with-a-long-random-password
 ALLO_API_KEY=replace-with-a-separate-random-api-key
-ALLO_ENCRYPTION_KEY=replace-with-a-long-random-32-byte-secret
+ALLO_ENCRYPTION_KEY=optional-override-use-a-long-random-32-byte-secret
 ALLO_MAX_LOADED_MODELS=1
 ALLO_CONTEXT_SIZE=4096
 ALLO_GPU_LAYERS=0
 ```
+
+Provider API keys are encrypted at rest. If `ALLO_ENCRYPTION_KEY` is not set, Allo automatically creates a random 256-bit master key at `data/provider-encryption.key` with owner-only file permissions. Keep the `data` directory or Docker `allo_data` volume persistent and backed up; losing that key makes saved provider credentials undecryptable. Set `ALLO_ENCRYPTION_KEY` only when you want to manage the master secret yourself, and keep it unchanged across restarts.
 
 Build and start:
 
